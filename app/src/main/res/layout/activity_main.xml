@@ -3,6 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topBar" />
+
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -10,21 +16,14 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <EditText
+        <TextView
             android:id="@+id/urlField"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:autofillHints=""
-            android:hint="@string/enter_url"
-            android:inputType="textUri" />
+            android:autofillHints=""/>
+
     </LinearLayout>
 
-    <WebView
-        android:id="@+id/webview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/topBar" />
 
     <ImageButton
         android:id="@+id/settingsButton"
