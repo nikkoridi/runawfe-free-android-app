@@ -59,6 +59,7 @@ class SettingsActivity : Activity() {
         prefs.edit().putBoolean("showUrl", isShowUrl).apply()
         prefs.edit().putString("urlQuery", changeURLView.query.toString()).apply()
         startActivity(Intent(this, MainActivity::class.java))
+        super.onBackPressed()
     }
 
     private fun hideKeyboard() {
