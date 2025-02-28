@@ -47,12 +47,6 @@ class MainActivity : Activity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val url = request.url.toString()
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                startActivity(browserIntent)
-                return true
-            }
             @SuppressLint("WebViewClientOnReceivedSslError", "ObsoleteSdkInt")
             override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1) {
