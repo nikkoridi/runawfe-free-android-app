@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "RunaWFE"
-include ':app'
+include ':runawfe'
