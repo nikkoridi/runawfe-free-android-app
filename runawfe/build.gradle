@@ -27,10 +27,12 @@ android {
     productFlavors {
         original {
             dimension "version"
+            applicationId "ru.runa.wfe"
             versionNameSuffix = "-v1"
         }
         parallel {
             dimension "version"
+            applicationId "ru.runa.wfe.parallel"
             versionNameSuffix = "-v2"
         }
     }

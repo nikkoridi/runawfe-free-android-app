@@ -4,7 +4,6 @@ package ru.runa.wfe
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.http.SslError
@@ -46,9 +45,6 @@ class MainActivity : Activity() {
         if (lastVersion != currentVersion) {
             webView.clearCache(true)
             webView.reload()
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("ПАБЕДА")
-            builder.show()
             val editor = prefs.edit()
             editor.putString("last_version", currentVersion)
             editor.apply()
@@ -72,6 +68,7 @@ class MainActivity : Activity() {
                 prefs.edit().putString("urlQuery", webView.getUrl()).apply()
                 if (webView.url.isNullOrBlank() || webView.url == "about:blank") {
                     val emptyURLDialogFragment = EmptyURLDialogFragment()
+                    emptyURLDialogFragment.activityOfMessage = this@MainActivity
                     emptyURLDialogFragment.show(fragmentManager, "emptyURLDialog")
                 }
 
