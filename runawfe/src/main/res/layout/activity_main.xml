@@ -27,12 +27,13 @@
 
     <ImageButton
         android:id="@+id/settingsButton"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_alignParentBottom="true"
-        android:layout_margin="16dp"
-        android:src="@drawable/ic_settings"
+        android:layout_marginStart="13dp"
+        android:layout_marginBottom="7dp"
+        android:background="#00FFFFFF"
         android:contentDescription="@string/settings_title"
-        android:background="#00FFFFFF" />
+        android:src="@drawable/ic_settings" />
 
 </RelativeLayout>
