@@ -37,7 +37,7 @@ class SettingsActivity : Activity() {
         changeURLView = findViewById(R.id.searchView)
         backButton = findViewById(R.id.backButton)
 
-        val wfurl = prefs.getString("urlQuery", "https://wf.processtech.ru/spa/").toString()
+        val wfurl = prefs.getString("urlQuery", "").toString()
         changeURLView.setQuery(wfurl, true)
 
         isShowUrl = prefs.getBoolean("showUrl", false)

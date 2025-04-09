@@ -35,7 +35,7 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
-        val wfURL = prefs.getString("urlQuery", "https://wf.processtech.ru/spa/").toString()
+        val wfURL = prefs.getString("urlQuery", "").toString()
         urlField = findViewById(R.id.urlField)
         webView = findViewById(R.id.webview)
         topBar = findViewById(R.id.topBar)
