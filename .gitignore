@@ -18,7 +18,6 @@ local.properties
 /runawfe/original/
 /runawfe/parallel/
 /gradle/
-gradle.properties
 gradlew
 gradlew.bat
 .kotlin
