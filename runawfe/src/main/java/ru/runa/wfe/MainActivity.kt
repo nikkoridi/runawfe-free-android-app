@@ -4,14 +4,21 @@ package ru.runa.wfe
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.DownloadManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.preference.PreferenceManager
 import android.view.View
+import android.webkit.CookieManager
 import android.webkit.SslErrorHandler
+import android.webkit.URLUtil
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -19,6 +26,10 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.edit
+import androidx.core.net.toUri
+import kotlin.math.abs
 
 
 class MainActivity : Activity() {
@@ -45,12 +56,12 @@ class MainActivity : Activity() {
         if (lastVersion != currentVersion) {
             webView.clearCache(true)
             webView.reload()
-            val editor = prefs.edit()
-            editor.putString("last_version", currentVersion)
-            editor.apply()
+            prefs.edit {
+                putString("last_version", currentVersion)
+            }
         }
         settingsButton.setOnClickListener {
-            prefs.edit().putString("urlQuery", webView.getUrl()).apply()
+            prefs.edit { putString("urlQuery", webView.url) }
             startActivity(Intent(this, SettingsActivity::class.java))
         }
         webView.webViewClient = object : WebViewClient() {
@@ -64,8 +75,8 @@ class MainActivity : Activity() {
             }
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
-                urlField.text = webView.getUrl()
-                prefs.edit().putString("urlQuery", webView.getUrl()).apply()
+                urlField.text = webView.url
+                prefs.edit { putString("urlQuery", webView.url) }
                 if (webView.url.isNullOrBlank() || webView.url == "about:blank") {
                     val emptyURLDialogFragment = EmptyURLDialogFragment()
                     emptyURLDialogFragment.activityOfMessage = this@MainActivity
@@ -74,6 +85,68 @@ class MainActivity : Activity() {
 
             }
         }
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimeType, contentLength ->
+            val fileName = URLUtil.guessFileName(url, contentDisposition, mimeType)
+            val request = DownloadManager.Request(url.toUri()).apply {
+                setMimeType(mimeType)
+
+                val cookies = CookieManager.getInstance().getCookie(url)
+                if (!cookies.isNullOrEmpty()) {
+                    addRequestHeader("cookie", cookies)
+                }
+                addRequestHeader("User-Agent", userAgent)
+                setDescription("Downloading file...")
+                setTitle(URLUtil.guessFileName(url, contentDisposition, mimeType))
+                allowScanningByMediaScanner()
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+                    setDestinationInExternalFilesDir(
+                        this@MainActivity,
+                        Environment.DIRECTORY_DOWNLOADS,
+                        URLUtil.guessFileName(url, contentDisposition, mimeType)
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    setDestinationInExternalPublicDir(
+                        Environment.DIRECTORY_DOWNLOADS,
+                        URLUtil.guessFileName(url, contentDisposition, mimeType))
+                }
+            }
+
+            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE)
+            val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+            val downloadId = downloadManager.enqueue(request)
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                val cursor = downloadManager.query(DownloadManager.Query().setFilterById(downloadId))
+                if (cursor.moveToFirst()) {
+                    val status = cursor.getInt(abs(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)))
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        val uri = downloadManager.getUriForDownloadedFile(downloadId)
+                        try {
+                            val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, mimeType)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            startActivity(openIntent)
+                        } catch (_: ActivityNotFoundException) {
+                            Toast.makeText(this@MainActivity,
+                                "No app found to open this file",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                cursor.close()
+            }, 3000)
+            Toast.makeText(
+                this@MainActivity,
+                "Downloading File",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
         val isShowUrl = prefs.getBoolean("showUrl", false)
         toggleUrlVisibility(isShowUrl)
 
