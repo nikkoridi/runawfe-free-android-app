@@ -7,4 +7,12 @@
     <string name="settings_title">Настройки</string>
     <string name="search_hint">Введите URL</string>
     <string name="update">Обновить</string>
+
+    <string name="title_activity_login">Вход</string>
+    <string name="prompt_login">Логин</string>
+    <string name="prompt_password">Пароль</string>
+    <string name="button_login">Войти</string>
+    <string name="auth_error">Ошибка аутентификации</string>
+    <string name="empty_form">Заполните обязательные поля</string>
+    <string name="invalid_session">Сессия не валидна</string>
 </resources>
