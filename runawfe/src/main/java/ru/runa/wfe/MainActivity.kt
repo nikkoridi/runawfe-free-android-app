@@ -29,6 +29,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import ru.runa.wfe.ui.login.LoginActivity
 import kotlin.math.abs
 
 
@@ -43,9 +44,14 @@ class MainActivity : Activity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
 
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val isLoggedUser = prefs.getBoolean("isLogged", false)
+        if (!isLoggedUser) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
+        setContentView(R.layout.activity_main)
         val wfURL = prefs.getString("urlQuery", "").toString()
         urlField = findViewById(R.id.urlField)
         webView = findViewById(R.id.webview)
