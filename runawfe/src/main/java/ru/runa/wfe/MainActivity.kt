@@ -29,6 +29,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import ru.runa.wfe.notification.NotificationService
 import ru.runa.wfe.ui.login.LoginActivity
 import kotlin.math.abs
 
@@ -50,6 +51,10 @@ class MainActivity : Activity() {
         if (!isLoggedUser) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
+        }
+        else {
+            val notificationService = Intent(this, NotificationService::class.java)
+            startService(notificationService)
         }
         setContentView(R.layout.activity_main)
         val wfURL = prefs.getString("urlQuery", "").toString()

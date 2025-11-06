@@ -15,4 +15,10 @@
     <string name="auth_error">Ошибка аутентификации</string>
     <string name="empty_form">Заполните обязательные поля</string>
     <string name="invalid_session">Сессия не валидна</string>
+    <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
+
+    <string name="notification_channel_description">Уведомления RunaWFE: новые задачи и сообщения</string>
+    <string name="several_tasks_notification_title">новых задач</string>
+    <string name="new_chat_message_title">Новое сообщение в чате</string>
+    <string name="several_messages_notification_title">новых ссобщений</string>
 </resources>
