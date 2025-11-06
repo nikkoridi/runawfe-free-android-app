@@ -57,6 +57,7 @@ class MainActivity : Activity() {
             startService(notificationService)
         }
         setContentView(R.layout.activity_main)
+        prefs.edit().remove("isLogged").apply() // Remove when credentials will be stored in App
         val wfURL = prefs.getString("urlQuery", "").toString()
         urlField = findViewById(R.id.urlField)
         webView = findViewById(R.id.webview)
