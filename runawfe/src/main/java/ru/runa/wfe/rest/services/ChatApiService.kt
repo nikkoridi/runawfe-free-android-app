@@ -4,12 +4,13 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 import ru.runa.wfe.rest.dto.WfChatRoom
+import ru.runa.wfe.rest.dto.WfeChatMessage
 
 interface ChatApiService {
 
-    @GET
+    @GET("chat")
     suspend fun getChatRooms(): Response<Collection<WfChatRoom>>
 
     @GET("chat/{processId}")
-    suspend fun getChatMessages(@Path("processId") processId: Long)
+    suspend fun getChatMessages(@Path("processId") processId: Long): Response<Collection<WfeChatMessage>>
 }
