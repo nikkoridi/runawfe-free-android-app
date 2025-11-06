@@ -1,18 +1,17 @@
 @file:Suppress("DEPRECATION")
 package ru.runa.wfe.ui.login
 
-import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.preference.PreferenceManager
-import androidx.lifecycle.Observer
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
 import ru.runa.wfe.SettingsActivity
 import ru.runa.wfe.databinding.ActivityLoginBinding
-
 
 class LoginActivity : AppCompatActivity() {
     private val loginViewModel: LoginViewModel by viewModels()
@@ -36,21 +35,26 @@ class LoginActivity : AppCompatActivity() {
             loginViewModel.login(login.text.toString(), password.text.toString())
         }
 
-        loginViewModel.loginFormState.observe(this@LoginActivity, Observer {
-            val loginState = it ?: return@Observer
-            when (loginState) {
-                is LoginResult.Error -> {
-                    error.text = loginState.message
-                }
-                is  LoginResult.Success -> {
-                    setResult(Activity.RESULT_OK)
-                    // Complete and destroy login activity once successful
-                    prefs.edit().putLogged()
-                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                    finish()
+        lifecycleScope.launch {
+            loginViewModel.loginFormState.collect { loginResult ->
+                when (loginResult) {
+                    is LoginResult.Error -> {
+                        error.text = loginResult.message
+                    }
+                    is  LoginResult.Success -> {
+                        setResult(RESULT_OK)
+                        // Complete and destroy login activity once successful
+                        prefs.edit().putLogged()
+                        intent = Intent(this@LoginActivity, MainActivity::class.java)
+                        intent.putExtra("isLogged", true)
+                        startActivity(intent)
+                        finishAfterTransition()
+                    }
+                    null -> {
+                    }
                 }
             }
-        })
+        }
 
         settingsButton.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))

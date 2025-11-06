@@ -1,19 +1,23 @@
 package ru.runa.wfe.ui.login
 
 import android.content.res.Resources
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.dto.WfeCredentials
 
+sealed class LoginResult {
+    data object Success: LoginResult()
+    data class Error(val message: String): LoginResult()
+}
 
 class LoginViewModel : ViewModel() {
-    private val _loginForm = MutableLiveData<LoginResult>()
-    val loginFormState: LiveData<LoginResult> = _loginForm
+    private var _loginForm = MutableStateFlow<LoginResult?>(null)
+    val loginFormState: StateFlow<LoginResult?> = _loginForm
 
     fun login(login: String, password: String) {
         viewModelScope.launch {
@@ -35,4 +39,5 @@ class LoginViewModel : ViewModel() {
     private fun passwordValidator(password: String): Boolean {
         return password.isNotBlank()
     }
+
 }
