@@ -21,5 +21,16 @@
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>
     <string name="several_tasks_notification_title">новых задач</string>
     <string name="new_chat_message_title">Новое сообщение в чате</string>
-    <string name="several_messages_notification_title">новых ссобщений</string>
+    <string name="several_messages_notification_title">новых сообщений</string>
+    <string name="tasks_channel_title">Новые задачи</string>
+    <string name="messages_channel_title">Новые сообщения</string>
+
+    <string name="permission_given">Разрешение получено</string>
+    <string name="permission_error">Отложено получение разрешения</string>
+
+    <string name="check_delay_title">Интервал проверки новых задач и сообщений</string>
+    <string name="tasks_sound_title">Звуковой сигнал для задач</string>
+    <string name="messages_sound_title">Звуковой сигнал для сообщений</string>
+    <string name="pick_sound">Нажмите для выбора сигнала</string>
+
 </resources>
