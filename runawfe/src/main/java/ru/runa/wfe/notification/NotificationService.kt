@@ -34,7 +34,7 @@ class NotificationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
+        createNotificationChannels()
         notificationServiceScope.launch {
             checkNewChatMessages()
             checkNewTasks()
@@ -50,17 +50,30 @@ class NotificationService : Service() {
 
     override fun onBind(p0: Intent?): IBinder? = null
 
-    private fun createNotificationChannel() {
+    private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            channel = NotificationChannel(
-                CHANNEL_ID,
-                CHANNEL_NAME,
+
+            val taskChannelDescription = this.getString(R.string.tasks_channel_description)
+            tasksChannel = NotificationChannel(
+                NotificationType.TASK.channelId,
+                this.getString(R.string.tasks_channel_title),
                 importance
             ).apply {
-                    description = R.string.notification_channel_description.toString()
+                    description = taskChannelDescription
                 }
-            notificationManager.createNotificationChannel(channel)
+
+            val messageChannelDescription = this.getString(R.string.messages_channel_description)
+            messagesChannel = NotificationChannel(
+                NotificationType.MESSAGE.channelId,
+                this.getString(R.string.messages_channel_title),
+                importance
+            ).apply {
+                description = messageChannelDescription
+            }
+
+            notificationManager.createNotificationChannel(tasksChannel)
+            notificationManager.createNotificationChannel(messagesChannel)
         }
     }
 
@@ -94,13 +107,15 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newMessages.size} ${R.string.several_messages_notification_title}",
-                notificationMessageText.toString()
+                "${newMessages.size} ${this.getString(R.string.several_messages_notification_title)}",
+                notificationMessageText.toString(),
+                NotificationType.MESSAGE
             )
         } else if (newMessages.size > 0) {
             showNotification(
-                R.string.new_chat_message_title.toString(),
-                "${newMessages[0].author}: ${newMessages[0].text}"
+                this.getString(R.string.new_chat_message_title),
+                "${newMessages[0].author}: ${newMessages[0].text}",
+                NotificationType.MESSAGE
             )
         }
     }
@@ -131,16 +146,17 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newTasks.size} ${R.string.several_tasks_notification_title}",
-                notificationMessageText.toString()
+                "${newTasks.size} ${this.getString(R.string.several_tasks_notification_title)}",
+                notificationMessageText.toString(),
+                NotificationType.TASK
             )
         } else if (newTasks.size > 0) {
-            showNotification(newTasks[0].name, newTasks[0].description)
+            showNotification(newTasks[0].name, newTasks[0].description,  NotificationType.TASK)
         }
     }
 
 
-    private fun showNotification(title: String, message: String) {
+    private fun showNotification(title: String, message: String, type: NotificationType) {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -149,7 +165,7 @@ class NotificationService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         )
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, type.channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setContentTitle(title)
@@ -165,8 +181,9 @@ class NotificationService : Service() {
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED -> {
                 notificationManager.notify(
-                    NOTIFICATION_ID +1,
+                    NOTIFICATION_ID + 1,
                     notification)
+                NOTIFICATION_ID += 1
             }
             else -> {
                 requestPermissionFromActivity()
@@ -185,11 +202,15 @@ class NotificationService : Service() {
     companion object {
         private val notificationServiceScope = CoroutineScope(Dispatchers.IO)
         private const val CHECK_INTERVAL: Long = 2*60*1000
-        private const val CHANNEL_ID = "ru.runa.wfe.notifications"
-        private const val CHANNEL_NAME = "RunaWfeNotifications"
-        private const val NOTIFICATION_ID = 1
-        private lateinit var channel: NotificationChannel
+        private var NOTIFICATION_ID = 1
+        private lateinit var tasksChannel: NotificationChannel
+        private lateinit var messagesChannel: NotificationChannel
         private var lastTasksCheck: Date = Date()
         private var lastChatsCheck: Date = Date()
     }
+}
+
+enum class NotificationType(val channelId: String) {
+    TASK("ru.runa.wfe.notifications.tasks"),
+    MESSAGE("ru.runa.wfe.notifications.messages")
 }
