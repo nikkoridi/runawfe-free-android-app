@@ -86,9 +86,15 @@ class NotificationService : Service() {
                     val processId = room.getId()
                     val chatRoomMessages = ApiClient.chatService.getChatMessages(processId).body()
                     if (chatRoomMessages != null) {
-                        for (message in chatRoomMessages) {
-                            if (message.createDate!! >= lastChatsCheck) {
+                        val chat: Iterator<WfeChatMessage> = chatRoomMessages.iterator()
+                        var readAllNew = false
+                        while (!readAllNew && chat.hasNext()) {
+                            val message = chat.next()
+                            if (message.createDate.compareTo(lastChatsCheck) >= 0) {
                                 newMessages.add(message)
+                            }
+                            else {
+                                readAllNew = true
                             }
                         }
                     }
