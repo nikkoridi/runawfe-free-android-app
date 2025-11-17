@@ -17,7 +17,8 @@
     <string name="invalid_session">Сессия не валидна</string>
     <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
 
-    <string name="notification_channel_description">Уведомления RunaWFE: новые задачи и сообщения</string>
+    <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
+    <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>
     <string name="several_tasks_notification_title">новых задач</string>
     <string name="new_chat_message_title">Новое сообщение в чате</string>
     <string name="several_messages_notification_title">новых ссобщений</string>

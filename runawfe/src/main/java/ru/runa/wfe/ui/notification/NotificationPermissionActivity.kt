@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import ru.runa.wfe.R
 
 class NotificationPermissionActivity : AppCompatActivity() {
     companion object {
@@ -35,14 +36,14 @@ class NotificationPermissionActivity : AppCompatActivity() {
             if (grantResults.isEmpty()) {
                 Toast.makeText(
                     this,
-                    "Permission was granted",
+                    this.getString(R.string.permission_error),
                     Toast.LENGTH_LONG
                 ).show()
             }
             else {
                 Toast.makeText(
                     this,
-                    "Permission denied",
+                    this.getString(R.string.permission_given),
                     Toast.LENGTH_LONG
                 ).show()
             }
