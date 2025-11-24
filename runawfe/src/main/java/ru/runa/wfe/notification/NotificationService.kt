@@ -6,13 +6,16 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.paging.PagingData
+import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -32,9 +35,20 @@ class NotificationService : Service() {
     private val notificationManager by lazy {
         NotificationManagerCompat.from(this)
     }
+    private lateinit var prefs: SharedPreferences
+
+    override fun onCreate() {
+        super.onCreate()
+        prefs = PreferenceManager.getDefaultSharedPreferences(this)
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannels()
+        val delay: Long = prefs.getString("checkDelay",
+            CHECK_INTERVAL.toString())?.toLong() ?: CHECK_INTERVAL
+        if (delay != CHECK_INTERVAL) {
+            CHECK_INTERVAL = delay
+        }
         notificationServiceScope.launch {
             checkNewChatMessages()
             checkNewTasks()
@@ -54,26 +68,31 @@ class NotificationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
 
-            val taskChannelDescription = this.getString(R.string.tasks_channel_description)
-            tasksChannel = NotificationChannel(
-                NotificationType.TASK.channelId,
+            tasksChannel = createChannel(importance,
+                NotificationType.TASK,
                 this.getString(R.string.tasks_channel_title),
-                importance
-            ).apply {
-                    description = taskChannelDescription
-                }
+                this.getString(R.string.tasks_channel_description))
 
-            val messageChannelDescription = this.getString(R.string.messages_channel_description)
-            messagesChannel = NotificationChannel(
-                NotificationType.MESSAGE.channelId,
+            messagesChannel = createChannel(importance,
+                NotificationType.MESSAGE,
                 this.getString(R.string.messages_channel_title),
-                importance
-            ).apply {
-                description = messageChannelDescription
-            }
+                this.getString(R.string.messages_channel_description))
 
             notificationManager.createNotificationChannel(tasksChannel)
             notificationManager.createNotificationChannel(messagesChannel)
+        }
+    }
+
+    private fun createChannel(importance: Int,
+                              type: NotificationType,
+                              title: String,
+                              channelDescription: String): NotificationChannel {
+        return NotificationChannel(
+            type.channelId,
+            title,
+            importance
+        ).apply {
+            description = channelDescription
         }
     }
 
@@ -135,7 +154,7 @@ class NotificationService : Service() {
         ).body()
         if (tasks != null && tasks.data.isNotEmpty()) {
             for (task in tasks.data) {
-                if (task.createDate >= lastTasksCheck) {
+                if (task.createDate.compareTo(lastTasksCheck) >= 0) {
                     newTasks.add(task)
                 }
             }
@@ -161,6 +180,14 @@ class NotificationService : Service() {
         }
     }
 
+    private fun getCustomNotificationSound(builder: NotificationCompat.Builder, type: NotificationType) {
+        val notificationSound = prefs.getString(type.soundKey, null)
+        if (notificationSound != null) {
+            val soundUri = Uri.parse(notificationSound)
+            builder.setSound(soundUri)
+        }
+    }
+
 
     private fun showNotification(title: String, message: String, type: NotificationType) {
         val notificationIntent = Intent(this, MainActivity::class.java)
@@ -171,14 +198,15 @@ class NotificationService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         )
 
-        val notification = NotificationCompat.Builder(this, type.channelId)
+        val notificationBuilder =  NotificationCompat.Builder(this, type.channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
-            .build()
+
+        val notification = notificationBuilder.build()
 
         // Android 13 (API level 33) and higher requires a permission
         when {
@@ -207,7 +235,7 @@ class NotificationService : Service() {
 
     companion object {
         private val notificationServiceScope = CoroutineScope(Dispatchers.IO)
-        private const val CHECK_INTERVAL: Long = 2*60*1000
+        private var CHECK_INTERVAL: Long = 2*60*1000
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
@@ -216,7 +244,7 @@ class NotificationService : Service() {
     }
 }
 
-enum class NotificationType(val channelId: String) {
-    TASK("ru.runa.wfe.notifications.tasks"),
-    MESSAGE("ru.runa.wfe.notifications.messages")
+enum class NotificationType(val channelId: String, val soundKey: String) {
+    TASK("ru.runa.wfe.notifications.tasks", "tasksSound"),
+    MESSAGE("ru.runa.wfe.notifications.messages", "messagesSound")
 }
