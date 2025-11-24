@@ -2,7 +2,6 @@
 
 package ru.runa.wfe
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -15,9 +14,11 @@ import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.SearchView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 
-class SettingsActivity : Activity() {
+class SettingsActivity : AppCompatActivity() {
 
     private lateinit var rootLayout: RelativeLayout
     private lateinit var showUrlCheckbox: CheckBox
@@ -52,10 +53,17 @@ class SettingsActivity : Activity() {
         backButton.setOnClickListener {
             getToMainScreen()
         }
+        if (savedInstanceState == null) {
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.notificationSettingsContainer, NotificationSettingsFragment())
+                .commit()
+        }
     }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        super.onBackPressed()
         getToMainScreen()
     }
 

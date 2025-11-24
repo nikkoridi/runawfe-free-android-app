@@ -28,9 +28,13 @@
     <string name="permission_given">Разрешение получено</string>
     <string name="permission_error">Отложено получение разрешения</string>
 
-    <string name="check_delay_title">Интервал проверки новых задач и сообщений</string>
-    <string name="tasks_sound_title">Звуковой сигнал для задач</string>
-    <string name="messages_sound_title">Звуковой сигнал для сообщений</string>
-    <string name="pick_sound">Нажмите для выбора сигнала</string>
+    <string name="check_delay_title">Интервал проверки новых задач и сообщений (милисекунды)</string>
+    <string name="tasks_notifications_title">Уведомления для новых задач</string>
+    <string name="messages_notifications_title">Уведомления для новых сообщений</string>
+    <string name="summary_setup_notifications">Нажмите для перехода к настройкам</string>
+    <string name="settings_empty_value_message">Задайте значение</string>
+    <string name="settings_value_error_message">Ошибка при получении значения</string>
+
+    <string name="notifications_settings">Уведомления</string>
 
 </resources>

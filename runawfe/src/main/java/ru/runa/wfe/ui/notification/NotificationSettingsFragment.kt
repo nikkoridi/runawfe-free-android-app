@@ -1,0 +1,134 @@
+package ru.runa.wfe.ui.notification
+
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.provider.Settings
+import android.text.InputType
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.edit
+import androidx.preference.EditTextPreference
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import ru.runa.wfe.R
+import ru.runa.wfe.notification.NotificationType
+
+class NotificationSettingsFragment : PreferenceFragmentCompat() {
+    private var soundUri: Uri? = null
+    private var lastPickedSoundKey = ""
+
+    private val ringtonePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result ->
+        when (result.resultCode) {
+            Activity.RESULT_OK -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    soundUri = result.data?.getParcelableExtra(
+                        RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
+                        Uri::class.java)
+                }
+               else {
+                   @Suppress("DEPRECATION")
+                    soundUri = result.data?.getParcelableExtra(
+                        RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                }
+                preferenceManager.sharedPreferences?.edit {
+                    putString(lastPickedSoundKey,
+                        soundUri.toString())
+                }
+            }
+            else -> {
+                Toast.makeText(context,
+                    this.getString(R.string.settings_value_error_message),
+                    Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.notification_settings, rootKey)
+        val checkDelay: EditTextPreference? = findPreference("checkDelay")
+        checkDelay?.setOnBindEditTextListener {
+            editText -> editText.inputType = InputType.TYPE_CLASS_NUMBER
+        }
+
+        findPreference<EditTextPreference>("checkDelay")
+            ?.setOnPreferenceChangeListener { _, newValue ->
+                if (newValue.toString().toLongOrNull() == null) {
+                    Toast.makeText(context,
+                        this.getString(R.string.settings_empty_value_message),
+                        Toast.LENGTH_SHORT).show()
+                    false
+                }
+                else {
+                    true
+                }
+            }
+    }
+
+    private fun runRingtonePicker(title: String, key: String) {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, title)
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
+        intent.putExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, soundUri)
+        ringtonePickerLauncher.launch(intent)
+    }
+
+    override fun onPreferenceTreeClick(preference: Preference): Boolean {
+        val key = preference.key
+        if (key.equals("tasksSound") || key.equals("messagesSound")) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                showNotificationSettingsOreo(key)
+            }
+            else {
+                // To show settings screen on old versions
+                // showNotificationSettingsBelowOreo()
+
+                // Show custom ringtone picker on old versions
+                when(key) {
+                    "tasksSound" -> {
+                        runRingtonePicker(preference.title.toString(), key)
+                        lastPickedSoundKey = key
+                        return true
+                    }
+                    "messagesSound" -> {
+                        runRingtonePicker(preference.title.toString(), key)
+                        lastPickedSoundKey = key
+                        return true
+                    }
+                }
+            }
+
+            return true
+        }
+        return super.onPreferenceTreeClick(preference)
+    }
+
+    private fun showNotificationSettingsOreo(key: String) {
+        val intent = Intent()
+        intent.setAction(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
+        val type = if (key == NotificationType.TASK.soundKey)
+            NotificationType.TASK
+        else
+            NotificationType.MESSAGE
+        intent.putExtra(Settings.EXTRA_CHANNEL_ID, type.channelId)
+        context?.startActivity(intent)
+    }
+
+    private fun showNotificationSettingsBelowOreo() {
+        val intent = Intent()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent.setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        } else {
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        }
+        intent.putExtra("app_package", context?.packageName)
+        intent.putExtra("app_uid", context?.applicationInfo?.uid)
+        context?.startActivity(intent)
+    }
+}
