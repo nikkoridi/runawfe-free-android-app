@@ -134,7 +134,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
                         URLUtil.guessFileName(url, contentDisposition, mimeType)
                     )
                 } else {
-                    @Suppress("DEPRECATION")
                     setDestinationInExternalPublicDir(
                         Environment.DIRECTORY_DOWNLOADS,
                         URLUtil.guessFileName(url, contentDisposition, mimeType))

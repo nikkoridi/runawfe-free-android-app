@@ -1,7 +1,6 @@
 package ru.runa.wfe.rest
 
 import android.util.Log
-import com.google.android.material.snackbar.Snackbar
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.dto.WfeCredentials
 import ru.runa.wfe.ui.login.LoginResult

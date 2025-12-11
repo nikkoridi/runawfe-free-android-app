@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package ru.runa.wfe
 
 import android.app.Activity
