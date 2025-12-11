@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import android.content.Intent
+import androidx.navigation.fragment.findNavController
 
 class EmptyURLDialogFragment : DialogFragment() {
     var activityOfMessage: Activity? = null
@@ -18,7 +19,7 @@ class EmptyURLDialogFragment : DialogFragment() {
             builder.setMessage("Адресная строка пустая")
                 .setPositiveButton("ОК") {
                         dialog, id ->
-                    startActivity(Intent(activityOfMessage, SettingsActivity::class.java))
+                    findNavController().navigate(R.id.to_settings)
                     dialog.cancel()
                 }
             builder.create()

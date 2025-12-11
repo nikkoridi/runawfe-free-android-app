@@ -6,9 +6,7 @@
 
     <action
         android:id="@+id/to_settings"
-        app:destination="@id/settingsFragment"
-        app:popUpTo="@id/navigation_graph"
-        app:popUpToInclusive="true"/>
+        app:destination="@id/settingsFragment" />
 
     <fragment
         android:id="@+id/settingsFragment"

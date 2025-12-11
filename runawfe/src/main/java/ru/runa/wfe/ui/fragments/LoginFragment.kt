@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.databinding.LoginFragmentBinding
 import ru.runa.wfe.ui.login.LoginViewModel
@@ -52,8 +53,15 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         lifecycleScope.launch {
             loginViewModel.loginFormState.collectLatest { loginResult ->
                 if (loginResult != null && loginResult.success) {
-                    prefs.edit().putLogged()
-                    findNavController().navigate(R.id.login_to_main)
+                    if (prefs.getString("urlQuery", "").isNullOrEmpty()) {
+                        val emptyURLDialogFragment = EmptyURLDialogFragment()
+                        emptyURLDialogFragment.activityOfMessage = requireActivity()
+                        emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+                    }
+                    else {
+                        prefs.edit().putLogged()
+                        findNavController().navigate(R.id.login_to_main)
+                    }
                 }
                 else {
                     error.text = getString(R.string.auth_error)

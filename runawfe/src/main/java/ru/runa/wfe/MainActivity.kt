@@ -24,7 +24,8 @@ class MainActivity : AppCompatActivity() {
         val wfURL = prefs.getString("urlQuery", "").toString()
         val isLoggedUser = prefs.getBoolean("isLogged", false)
         if (wfURL.isEmpty()) {
-            navController.navigate(R.id.to_settings)
+            navController.navigate(R.id.loginFragment)
+            navController.navigate(R.id.login_to_settings)
         }
         else if (!isLoggedUser) {
             navController.navigate(R.id.loginFragment)

@@ -23,6 +23,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var prefs: SharedPreferences
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
+    private var isUrlChanged: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +31,12 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             .onBackPressedDispatcher
             .addCallback(this) {
                 savePreferences()
-                findNavController().popBackStack()
+                if (isUrlChanged) {
+                    findNavController().navigate(R.id.settings_to_login)
+                }
+                else {
+                    findNavController().popBackStack()
+                }
             }
     }
 
@@ -65,7 +71,9 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
     private fun savePreferences() {
         prefs.edit().putBoolean("showUrl", isShowUrl).apply()
-        prefs.edit().putString("urlQuery", changeURLView.query.toString()).apply()
+        val changeUrl = changeURLView.query.toString()
+        isUrlChanged = changeUrl != prefs.getString("urlQuery", "").toString()
+        prefs.edit().putString("urlQuery", changeUrl).apply()
     }
 
     private fun hideKeyboard() {
