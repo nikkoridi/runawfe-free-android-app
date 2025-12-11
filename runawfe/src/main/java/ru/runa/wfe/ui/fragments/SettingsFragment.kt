@@ -18,7 +18,6 @@ import ru.runa.wfe.R
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 class SettingsFragment : Fragment(R.layout.settings_fragment) {
-    private lateinit var rootLayout: LinearLayout
     private lateinit var showUrlCheckbox: CheckBox
     private lateinit var changeURLView: SearchView
     private lateinit var prefs: SharedPreferences
@@ -48,7 +47,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         isShowUrl = prefs.getBoolean("showUrl", false)
         showUrlCheckbox.isChecked = isShowUrl
 
-        rootLayout.setOnClickListener {
+        view.findViewById<LinearLayout>(R.id.rootLayout).setOnClickListener {
             hideKeyboard()
         }
 
