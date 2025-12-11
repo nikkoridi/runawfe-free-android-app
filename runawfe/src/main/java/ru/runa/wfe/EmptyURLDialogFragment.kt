@@ -6,7 +6,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
-import android.app.DialogFragment
+import androidx.fragment.app.DialogFragment
 import android.content.Intent
 
 class EmptyURLDialogFragment : DialogFragment() {

@@ -6,6 +6,7 @@
     <string name="back_button_description">Вернуться</string>
     <string name="settings_title">Настройки</string>
     <string name="search_hint">Введите URL</string>
+    <string name="search_button">Сохранить URL</string>
     <string name="update">Обновить</string>
 
     <string name="title_activity_login">Вход</string>
@@ -14,8 +15,10 @@
     <string name="button_login">Войти</string>
     <string name="auth_error">Ошибка аутентификации</string>
     <string name="empty_form">Заполните обязательные поля</string>
+    <string name="not_found_login">Пользователь не найден</string>
     <string name="invalid_session">Сессия не валидна</string>
     <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
+    <string name="undefined_error">Ошибка</string>
 
     <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>
@@ -36,5 +39,6 @@
     <string name="settings_value_error_message">Ошибка при получении значения</string>
 
     <string name="notifications_settings">Уведомления</string>
+    <string name="url_settings">Адрес сервера</string>
 
 </resources>

@@ -1,6 +1,5 @@
 package ru.runa.wfe.ui.login
 
-import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,13 +9,13 @@ import ru.runa.wfe.R
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.dto.WfeCredentials
 
-sealed class LoginResult {
-    data object Success: LoginResult()
-    data class Error(val message: String): LoginResult()
-}
+data class LoginResult (
+    val success: Boolean = false,
+    val error: Int? = null
+)
 
 class LoginViewModel : ViewModel() {
-    private var _loginForm = MutableStateFlow<LoginResult?>(null)
+    private var _loginForm = MutableStateFlow<LoginResult?>(LoginResult())
     val loginFormState: StateFlow<LoginResult?> = _loginForm
 
     fun login(login: String, password: String) {
@@ -25,9 +24,7 @@ class LoginViewModel : ViewModel() {
                 _loginForm.value = TokenManager.login(WfeCredentials(login, password))
             }
             else {
-                _loginForm.value = LoginResult.Error(
-                    Resources.getSystem().getString(R.string.empty_form)
-                )
+                _loginForm.value = LoginResult(false, R.string.empty_form)
             }
         }
     }

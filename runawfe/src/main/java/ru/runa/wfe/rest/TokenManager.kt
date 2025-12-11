@@ -1,5 +1,8 @@
 package ru.runa.wfe.rest
 
+import android.util.Log
+import com.google.android.material.snackbar.Snackbar
+import ru.runa.wfe.R
 import ru.runa.wfe.rest.dto.WfeCredentials
 import ru.runa.wfe.ui.login.LoginResult
 
@@ -20,17 +23,21 @@ object TokenManager {
             val response = ApiClient.authService.basic(credentials)
             if (response.isSuccessful) {
                 token = response.body().toString()
-                LoginResult.Success
+                return  LoginResult(true)
             }
             else {
                 when (response.code()) {
-                    401 -> LoginResult.Error("Unauthorized")
-                    404 -> LoginResult.Error("Not found")
-                    else -> LoginResult.Error("Undefined response error")
+                    401 -> LoginResult(false, R.string.auth_error)
+                    404 -> LoginResult(false, R.string.not_found_login)
+                    else -> {
+                        Log.e("TokenManager", "Undefined response error")
+                        LoginResult(false, R.string.undefined_error)
+                    }
                 }
             }
         } catch (exception: Exception) {
-            LoginResult.Error("Unknown error: ${exception.localizedMessage}")
+            Log.e("TokenManager", "Unknown error: ${exception.localizedMessage}")
+            LoginResult(false, R.string.undefined_error)
         } finally {
             credentials.login = ""
             credentials.password = ""

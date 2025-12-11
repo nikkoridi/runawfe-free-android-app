@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navigation_graph"
+    app:startDestination="@id/settingsFragment">
+
+    <action
+        android:id="@+id/to_settings"
+        app:destination="@id/settingsFragment"
+        app:popUpTo="@id/navigation_graph"
+        app:popUpToInclusive="true"/>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="ru.runa.wfe.ui.fragments.SettingsFragment"
+        android:label="Settings">
+    <action
+        android:id="@+id/settings_to_login"
+        app:destination="@id/loginFragment"
+        app:popUpTo="@id/settingsFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="ru.runa.wfe.ui.fragments.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/login_to_main"
+            app:destination="@id/mainFragment"
+            app:popUpTo="@id/loginFragment"/>
+        <action
+            android:id="@+id/login_to_settings"
+            app:destination="@id/settingsFragment"
+            app:popUpTo="@id/loginFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/notificationSettingsFragment"
+        android:name="ru.runa.wfe.ui.notification.NotificationSettingsFragment"
+        android:label="NotificationSettingsFragment">
+        <action
+            android:id="@+id/notifications_to_main"
+            app:destination="@id/mainFragment"
+            app:popUpTo="@id/notificationSettingsFragment"/>
+    </fragment>
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="ru.runa.wfe.ui.fragments.WebFragment"
+        android:label="Main">
+    <action
+        android:id="@+id/main_to_settings"
+        app:destination="@id/settingsFragment"
+        app:popUpTo="@id/mainFragment"/>
+    </fragment>
+</navigation>
