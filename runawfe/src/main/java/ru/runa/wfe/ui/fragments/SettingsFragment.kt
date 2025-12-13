@@ -31,13 +31,16 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             .onBackPressedDispatcher
             .addCallback(this) {
                 savePreferences()
-                if (isUrlChanged) {
-                    findNavController().navigate(R.id.settings_to_login)
-                }
-                else {
-                    findNavController().popBackStack()
-                }
+                goBack()
             }
+    }
+
+    private fun goBack() {
+        if (isUrlChanged) {
+            findNavController().navigate(R.id.settings_to_login)
+        } else {
+            findNavController().popBackStack()
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -55,6 +58,11 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         view.findViewById<LinearLayout>(R.id.rootLayout).setOnClickListener {
             hideKeyboard()
+        }
+
+        backButton.setOnClickListener {
+            savePreferences()
+            goBack()
         }
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
