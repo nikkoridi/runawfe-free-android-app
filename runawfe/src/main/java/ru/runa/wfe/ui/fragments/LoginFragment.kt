@@ -48,23 +48,22 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
 
         loginButton.setOnClickListener {
             loginViewModel.login(login.text.toString(), password.text.toString())
-        }
-
-        lifecycleScope.launch {
-            loginViewModel.loginFormState.collectLatest { loginResult ->
-                if (loginResult != null && loginResult.success) {
-                    if (prefs.getString("urlQuery", "").isNullOrEmpty()) {
-                        val emptyURLDialogFragment = EmptyURLDialogFragment()
-                        emptyURLDialogFragment.activityOfMessage = requireActivity()
-                        emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+            lifecycleScope.launch {
+                loginViewModel.loginFormState.collectLatest { loginResult ->
+                    if (loginResult != null && loginResult.success) {
+                        if (prefs.getString("urlQuery", "").isNullOrEmpty()) {
+                            val emptyURLDialogFragment = EmptyURLDialogFragment()
+                            emptyURLDialogFragment.activityOfMessage = requireActivity()
+                            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+                        }
+                        else {
+                            prefs.edit().putLogged()
+                            findNavController().navigate(R.id.login_to_main)
+                        }
                     }
                     else {
-                        prefs.edit().putLogged()
-                        findNavController().navigate(R.id.login_to_main)
+                        error.text = getString(R.string.auth_error)
                     }
-                }
-                else {
-                    error.text = getString(R.string.auth_error)
                 }
             }
         }
