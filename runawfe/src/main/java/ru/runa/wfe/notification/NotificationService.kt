@@ -236,15 +236,6 @@ class NotificationService : Service() {
         }
     }
 
-    private fun getCustomNotificationSound(builder: NotificationCompat.Builder, type: NotificationType) {
-        val notificationSound = prefs.getString(type.soundKey, null)
-        if (notificationSound != null) {
-            val soundUri = Uri.parse(notificationSound)
-            builder.setSound(soundUri)
-        }
-    }
-
-
     private fun showNotification(title: String, message: String, type: NotificationType) {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
