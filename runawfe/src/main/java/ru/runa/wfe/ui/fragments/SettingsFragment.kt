@@ -1,10 +1,7 @@
-@file:Suppress("DEPRECATION")
 package ru.runa.wfe.ui.fragments
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.CheckBox
@@ -13,14 +10,18 @@ import android.widget.LinearLayout
 import android.widget.SearchView
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.launch
+import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 class SettingsFragment : Fragment(R.layout.settings_fragment) {
+    private lateinit var preferencesManager: PreferencesManager
+
     private lateinit var showUrlCheckbox: CheckBox
     private lateinit var changeURLView: SearchView
-    private lateinit var prefs: SharedPreferences
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
     private var isUrlChanged: Boolean = false
@@ -45,15 +46,17 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        prefs = PreferenceManager.getDefaultSharedPreferences(view.context)
+        preferencesManager = PreferencesManager(view.context)
         showUrlCheckbox = view.findViewById(R.id.showUrlCheckbox)
         changeURLView = view.findViewById(R.id.searchView)
         backButton = view.findViewById(R.id.backButton)
 
-        val wfurl = prefs.getString("urlQuery", "").toString()
+        val wfurl = preferencesManager
+            .getValue(PreferencesManager.WEBVIEW_URL, "")
         changeURLView.setQuery(wfurl, true)
 
-        isShowUrl = prefs.getBoolean("showUrl", false)
+        isShowUrl = preferencesManager
+            .getValue(PreferencesManager.SHOW_URL, false)
         showUrlCheckbox.isChecked = isShowUrl
 
         view.findViewById<LinearLayout>(R.id.rootLayout).setOnClickListener {
@@ -78,10 +81,15 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     }
 
     private fun savePreferences() {
-        prefs.edit().putBoolean("showUrl", isShowUrl).apply()
+        lifecycleScope.launch {
+            preferencesManager.setKey(PreferencesManager.SHOW_URL, isShowUrl)
+        }
         val changeUrl = changeURLView.query.toString()
-        isUrlChanged = changeUrl != prefs.getString("urlQuery", "").toString()
-        prefs.edit().putString("urlQuery", changeUrl).apply()
+        isUrlChanged = changeUrl != preferencesManager
+            .getValue(PreferencesManager.WEBVIEW_URL, "")
+        lifecycleScope.launch {
+            preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+        }
     }
 
     private fun hideKeyboard() {

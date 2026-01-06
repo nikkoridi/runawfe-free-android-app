@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package ru.runa.wfe
 
 import android.Manifest
@@ -6,10 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -22,9 +19,9 @@ import ru.runa.wfe.notification.NotificationService
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var preferencesManager: PreferencesManager
 
     private lateinit var navController: NavController
-    private lateinit var prefs: SharedPreferences
 
     private val permissionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -43,9 +40,11 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
         as NavHostFragment
         navController = navHostFragment.navController
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val wfURL = prefs.getString("urlQuery", "").toString()
-        val isLoggedUser = prefs.getBoolean("isLogged", false)
+        preferencesManager = PreferencesManager(this)
+        val wfURL = preferencesManager
+            .getValue(PreferencesManager.WEBVIEW_URL, "")
+        val isLoggedUser = preferencesManager
+            .getValue(PreferencesManager.SHOW_URL, false)
         if (wfURL.isEmpty()) {
             navController.navigate(R.id.loginFragment)
             navController.navigate(R.id.login_to_settings)

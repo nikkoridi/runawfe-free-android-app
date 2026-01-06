@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
@@ -20,7 +19,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.paging.PagingData
-import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -28,6 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
+import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.dto.WfChatRoom
@@ -41,7 +40,7 @@ class NotificationService : Service() {
     private val notificationManager by lazy {
         NotificationManagerCompat.from(this)
     }
-    private lateinit var prefs: SharedPreferences
+    private lateinit var preferencesManager: PreferencesManager
     private lateinit var thread: HandlerThread
     private lateinit var notificationServiceScope: CoroutineScope
 
@@ -56,7 +55,7 @@ class NotificationService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        preferencesManager = PreferencesManager(this)
         registerReceiver(permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
             Context.RECEIVER_NOT_EXPORTED)
@@ -111,8 +110,10 @@ class NotificationService : Service() {
 
         createNotificationChannels()
 
-        val checkDelay: Long = prefs.getString("checkDelay",
-            CHECK_INTERVAL.toString())?.toLong() ?: CHECK_INTERVAL
+        val checkDelay: Long = preferencesManager.getValue(
+            PreferencesManager.CHECK_DELAY,
+            CHECK_INTERVAL)
+
         if (checkDelay != CHECK_INTERVAL) {
             CHECK_INTERVAL = checkDelay
         }

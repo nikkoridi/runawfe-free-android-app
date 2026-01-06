@@ -11,13 +11,18 @@ import android.text.InputType
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import kotlinx.coroutines.launch
+import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.notification.NotificationType
 
 class NotificationSettingsFragment : PreferenceFragmentCompat() {
+    private lateinit var preferencesManager: PreferencesManager
+
     private var soundUri: Uri? = null
     private var lastPickedSoundKey = ""
 
@@ -50,20 +55,30 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
+        preferencesManager = PreferencesManager(requireContext())
         val checkDelay: EditTextPreference? = findPreference("checkDelay")
+
+        val savedCheckDelay: Long = preferencesManager.getValue(PreferencesManager.CHECK_DELAY,
+                60*1000)
+        checkDelay?.summary = savedCheckDelay.toString()
+
         checkDelay?.setOnBindEditTextListener {
             editText -> editText.inputType = InputType.TYPE_CLASS_NUMBER
         }
 
         findPreference<EditTextPreference>("checkDelay")
             ?.setOnPreferenceChangeListener { _, newValue ->
-                if (newValue.toString().toLongOrNull() == null) {
+                val longNewValue = newValue.toString().toLongOrNull()
+                if (longNewValue == null) {
                     Toast.makeText(context,
                         this.getString(R.string.settings_empty_value_message),
                         Toast.LENGTH_SHORT).show()
                     false
                 }
                 else {
+                    lifecycleScope.launch {
+                        preferencesManager.setKey(PreferencesManager.CHECK_DELAY, longNewValue)
+                    }
                     true
                 }
             }

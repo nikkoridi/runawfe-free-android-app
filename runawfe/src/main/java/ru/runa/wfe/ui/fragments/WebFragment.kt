@@ -1,4 +1,3 @@
-@file:Suppress("DEPRECATION")
 package ru.runa.wfe.ui.fragments
 
 import android.annotation.SuppressLint
@@ -6,14 +5,12 @@ import android.app.Activity.DOWNLOAD_SERVICE
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
-import android.preference.PreferenceManager
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.SslErrorHandler
@@ -27,20 +24,22 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.launch
 import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
+import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
+    private lateinit var preferencesManager: PreferencesManager
 
     private lateinit var webView: WebView
     private lateinit var urlField: TextView
-    private lateinit var prefs: SharedPreferences
     private lateinit var topBar: LinearLayout
     private lateinit var settingsButton: ImageButton
 
@@ -63,27 +62,29 @@ class WebFragment : Fragment(R.layout.web_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        prefs = PreferenceManager.getDefaultSharedPreferences(view.context)
+        preferencesManager = PreferencesManager(view.context)
 
-        prefs.edit().remove("isLogged").apply() // Remove when credentials will be stored in App
-
-        val wfURL = prefs.getString("urlQuery", "").toString()
+        val wfURL = preferencesManager
+            .getValue(PreferencesManager.WEBVIEW_URL, "")
         urlField = view.findViewById(R.id.urlField)
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
-        val lastVersion = prefs.getString("last_version", "")
+        val lastVersion = preferencesManager
+            .getValue(PreferencesManager.LAST_VERSION, "").toString()
         val currentVersion: String = BuildConfig.VERSION_NAME
         if (lastVersion != currentVersion) {
             webView.clearCache(true)
             webView.reload()
-            prefs.edit {
-                putString("last_version", currentVersion)
+            lifecycleScope.launch {
+                preferencesManager.setKey(PreferencesManager.LAST_VERSION, currentVersion)
             }
         }
 
         settingsButton.setOnClickListener {
-            prefs.edit { putString("urlQuery", webView.url) }
+            lifecycleScope.launch {
+                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, webView.url.toString())
+            }
             findNavController().navigate(R.id.main_to_settings)
         }
 
@@ -99,7 +100,9 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 urlField.text = webView.url
-                prefs.edit { putString("urlQuery", webView.url) }
+                lifecycleScope.launch {
+                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, webView.url.toString())
+                }
                 if (webView.url.isNullOrBlank() || webView.url == "about:blank") {
                     val emptyURLDialogFragment = EmptyURLDialogFragment()
                     emptyURLDialogFragment.activityOfMessage = requireActivity()
@@ -169,7 +172,8 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
-        val isShowUrl = prefs.getBoolean("showUrl", false)
+        val isShowUrl = preferencesManager
+            .getValue(PreferencesManager.SHOW_URL, false)
         toggleUrlVisibility(isShowUrl)
 
         val settings: WebSettings = webView.settings

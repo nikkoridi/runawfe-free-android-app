@@ -1,10 +1,6 @@
-@file:Suppress("DEPRECATION")
-
 package ru.runa.wfe.ui.fragments
 
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,15 +11,17 @@ import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
+import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.databinding.LoginFragmentBinding
 import ru.runa.wfe.ui.login.LoginViewModel
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
+    private lateinit var preferencesManager: PreferencesManager
+
     private val loginViewModel: LoginViewModel by viewModels()
     private var _binding: LoginFragmentBinding? = null
     private val binding get() = _binding!!
-    private lateinit var prefs: SharedPreferences
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +36,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        prefs = PreferenceManager.getDefaultSharedPreferences(view.context)
+        preferencesManager = PreferencesManager(view.context)
         val login = binding.login
         val password = binding.login
         val error = binding.errorMessage
@@ -51,13 +49,15 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
             lifecycleScope.launch {
                 loginViewModel.loginFormState.collectLatest { loginResult ->
                     if (loginResult != null && loginResult.success) {
-                        if (prefs.getString("urlQuery", "").isNullOrEmpty()) {
+                        if (preferencesManager.getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()) {
                             val emptyURLDialogFragment = EmptyURLDialogFragment()
                             emptyURLDialogFragment.activityOfMessage = requireActivity()
                             emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
                         }
                         else {
-                            prefs.edit().putLogged()
+                            lifecycleScope.launch {
+                                preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
+                            }
                             findNavController().navigate(R.id.login_to_main)
                         }
                     }
@@ -77,10 +77,5 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun SharedPreferences.Editor.putLogged(logged: Boolean = true) {
-        putBoolean("isLogged", logged)
-        apply()
     }
 }
