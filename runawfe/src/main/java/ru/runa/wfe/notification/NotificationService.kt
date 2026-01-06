@@ -194,14 +194,8 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newMessages.size} ${this.getString(R.string.several_messages_notification_title)}",
+                "${newMessages.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newMessages.size)}",
                 notificationMessageText.toString(),
-                NotificationType.MESSAGE
-            )
-        } else if (newMessages.size > 0) {
-            showNotification(
-                this.getString(R.string.new_chat_message_title),
-                "${newMessages[0].author}: ${newMessages[0].text}",
                 NotificationType.MESSAGE
             )
         }
@@ -233,7 +227,7 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newTasks.size} ${this.getString(R.string.several_tasks_notification_title)}",
+                "${newTasks.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newTasks.size)}",
                 notificationMessageText.toString(),
                 NotificationType.TASK
             )
