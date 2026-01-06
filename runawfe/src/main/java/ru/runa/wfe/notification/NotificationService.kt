@@ -5,21 +5,27 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
+import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.paging.PagingData
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
 import ru.runa.wfe.R
@@ -28,7 +34,7 @@ import ru.runa.wfe.rest.dto.WfChatRoom
 import ru.runa.wfe.rest.dto.WfeChatMessage
 import ru.runa.wfe.rest.dto.WfePagedList
 import ru.runa.wfe.rest.dto.WfeTask
-import ru.runa.wfe.ui.notification.NotificationPermissionActivity
+import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.util.Date
 
 class NotificationService : Service() {
@@ -36,33 +42,89 @@ class NotificationService : Service() {
         NotificationManagerCompat.from(this)
     }
     private lateinit var prefs: SharedPreferences
+    private lateinit var thread: HandlerThread
+    private lateinit var notificationServiceScope: CoroutineScope
+
+    private val permissionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val permissionGranted = intent.getBooleanExtra(
+                "permission_granted",
+                false)
+            if (permissionGranted) setNotifications()
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        registerReceiver(permissionReceiver,
+            IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
+            Context.RECEIVER_NOT_EXPORTED)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannels()
-        val delay: Long = prefs.getString("checkDelay",
-            CHECK_INTERVAL.toString())?.toLong() ?: CHECK_INTERVAL
-        if (delay != CHECK_INTERVAL) {
-            CHECK_INTERVAL = delay
+        if (!checkPermission()) {
+            stopSelf()
+            Log.e("NotificationsManager", "No required permission: "
+                    + Manifest.permission.POST_NOTIFICATIONS)
+            val permissionRequestIntent =
+                Intent(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName).apply {
+                putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
+            }
+            sendBroadcast(permissionRequestIntent)
+            return START_NOT_STICKY
         }
-        notificationServiceScope.launch {
-            checkNewChatMessages()
-            checkNewTasks()
-            delay(CHECK_INTERVAL)
-        }
+
+        setNotifications()
         return START_STICKY
     }
 
     override fun onDestroy() {
-        notificationServiceScope.cancel()
+        if (::notificationServiceScope.isInitialized) {
+            notificationServiceScope.cancel()
+        }
+        thread.quitSafely()
+        unregisterReceiver(permissionReceiver)
         super.onDestroy()
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
+
+    private fun setNotifications() {
+        thread = HandlerThread("notificationsCheck")
+        thread.start()
+        val handler = Handler(thread.looper)
+        notificationServiceScope = CoroutineScope(handler.asCoroutineDispatcher())
+
+        // Notify about service start
+        val serviceStartNotification = NotificationCompat.Builder(this,
+            NotificationType.DEFAULT.channelId)
+            .setContentTitle(getString(R.string.notifications_service_title))
+            .setContentText(getString(R.string.notifications_service_message))
+            .build()
+        val serviceChannel = createChannel(1,
+            NotificationType.DEFAULT,
+            this.getString(R.string.notifications_settings),
+            this.getString(R.string.notifications_service_message))
+        notificationManager.createNotificationChannel(serviceChannel)
+        startForeground(1, serviceStartNotification)
+
+        createNotificationChannels()
+
+        val checkDelay: Long = prefs.getString("checkDelay",
+            CHECK_INTERVAL.toString())?.toLong() ?: CHECK_INTERVAL
+        if (checkDelay != CHECK_INTERVAL) {
+            CHECK_INTERVAL = checkDelay
+        }
+
+        notificationServiceScope.launch {
+            while (isActive) {
+                checkNewChatMessages()
+                checkNewTasks()
+                delay(CHECK_INTERVAL)
+            }
+        }
+    }
 
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -209,32 +271,25 @@ class NotificationService : Service() {
         val notification = notificationBuilder.build()
 
         // Android 13 (API level 33) and higher requires a permission
-        when {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED -> {
-                notificationManager.notify(
-                    NOTIFICATION_ID + 1,
-                    notification)
-                NOTIFICATION_ID += 1
-            }
-            else -> {
-                requestPermissionFromActivity()
-            }
+        if (checkPermission()) {
+            notificationManager.notify(
+                NOTIFICATION_ID + 1,
+                notification)
+            NOTIFICATION_ID += 1
         }
     }
 
-    private fun requestPermissionFromActivity() {
-        val intent = Intent(this, NotificationPermissionActivity::class.java)
-            .apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-        startActivity(intent)
+    private fun checkPermission(): Boolean {
+        // Is true when
+        // * Current API level is higher than 33 (Android 13) and permission granted
+        // * Or the Android version is lower and there's no need in permissions
+        return ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                || (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU)
     }
 
     companion object {
-        private val notificationServiceScope = CoroutineScope(Dispatchers.IO)
         private var CHECK_INTERVAL: Long = 2*60*1000
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
@@ -245,6 +300,7 @@ class NotificationService : Service() {
 }
 
 enum class NotificationType(val channelId: String, val soundKey: String) {
+    DEFAULT("ru.runa.wfe.notifications", ""),
     TASK("ru.runa.wfe.notifications.tasks", "tasksSound"),
     MESSAGE("ru.runa.wfe.notifications.messages", "messagesSound")
 }

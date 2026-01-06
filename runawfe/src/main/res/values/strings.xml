@@ -20,6 +20,9 @@
     <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
     <string name="undefined_error">Ошибка</string>
 
+    <string name="notifications_service_title">Сервис уведомлений запущен</string>
+    <string name="notifications_service_message">Уведомления RunaWFE о новых задачах и сообщениях</string>
+
     <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>
     <string name="several_tasks_notification_title">новых задач</string>
@@ -28,6 +31,10 @@
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
 
+    <string name="permission_request_title">Запрос разрешения</string>
+    <string name="permission_notification_need">Разрешение требуется для работы оповещений</string>
+    <string name="permission_set">Настроить разрешение</string>
+    <string name="permission_snackbar_set">Я передумал</string>
     <string name="permission_given">Разрешение получено</string>
     <string name="permission_error">Отложено получение разрешения</string>
 

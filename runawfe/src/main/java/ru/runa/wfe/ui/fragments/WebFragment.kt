@@ -34,7 +34,6 @@ import androidx.navigation.fragment.findNavController
 import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
-import ru.runa.wfe.notification.NotificationService
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
@@ -66,8 +65,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         super.onViewCreated(view, savedInstanceState)
         prefs = PreferenceManager.getDefaultSharedPreferences(view.context)
 
-        val notificationService = Intent(requireContext(), NotificationService::class.java)
-        requireContext().startService(notificationService)
         prefs.edit().remove("isLogged").apply() // Remove when credentials will be stored in App
 
         val wfURL = prefs.getString("urlQuery", "").toString()
