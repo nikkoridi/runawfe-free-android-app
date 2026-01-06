@@ -123,6 +123,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
                 addRequestHeader("User-Agent", userAgent)
                 setDescription("Downloading file...")
                 setTitle(URLUtil.guessFileName(url, contentDisposition, mimeType))
+                @Suppress("DEPRECATION")
                 allowScanningByMediaScanner()
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
