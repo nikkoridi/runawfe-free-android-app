@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.PreferencesManager
@@ -45,21 +44,26 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         val settingsButton = binding.settingsButton
 
         loginButton.setOnClickListener {
-            loginViewModel.login(login.text.toString(), password.text.toString())
-            lifecycleScope.launch {
-                loginViewModel.loginFormState.collectLatest { loginResult ->
-                    if (loginResult != null && loginResult.success) {
-                        if (preferencesManager.getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()) {
-                            val emptyURLDialogFragment = EmptyURLDialogFragment()
-                            emptyURLDialogFragment.activityOfMessage = requireActivity()
-                            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+            val loginValue = login.text.toString().trim()
+            val passwordValue = password.text.toString().trim()
+            loginViewModel.login(loginValue, passwordValue) { loginResult ->
+                if (loginResult.success) {
+                    if (preferencesManager
+                        .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()) {
+                        val emptyURLDialogFragment = EmptyURLDialogFragment()
+                        emptyURLDialogFragment.activityOfMessage = requireActivity()
+                        emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+                    }
+                    else {
+                        lifecycleScope.launch {
+                            preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
                         }
-                        else {
-                            lifecycleScope.launch {
-                                preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
-                            }
-                            findNavController().navigate(R.id.login_to_main)
-                        }
+                        findNavController().navigate(R.id.login_to_main)
+                    }
+                }
+                else {
+                    if (loginResult.error != null) {
+                        error.text = getString(loginResult.error)
                     }
                     else {
                         error.text = getString(R.string.auth_error)
