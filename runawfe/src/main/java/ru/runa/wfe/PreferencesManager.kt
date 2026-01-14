@@ -20,14 +20,6 @@ private const val PREFERENCES_NAME = "app_preferences"
 val Context.dataStore by preferencesDataStore(name = PREFERENCES_NAME)
 
 class PreferencesManager(private val context: Context) {
-    companion object {
-        val WEBVIEW_URL = stringPreferencesKey("urlQuery")
-        val LAST_VERSION = stringPreferencesKey("last_version")
-        val SHOW_URL = booleanPreferencesKey("showUrl")
-        val CHECK_DELAY = longPreferencesKey("checkDelay")
-        val IS_LOGGED = booleanPreferencesKey("isLogged")
-    }
-
     suspend fun<T> setKey(key: Preferences.Key<T>, value: T) {
         context.dataStore.edit {
             it[key] = value
