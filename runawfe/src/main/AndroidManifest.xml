@@ -37,12 +37,6 @@
                 </intent-filter>
             </activity>
 
-        <activity
-            android:name=".ui.notification.NotificationPermissionActivity"
-            android:exported="false"
-            android:label="@string/title_activity_notification_permission"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
         <service
             android:name=".notification.NotificationService"
             android:foregroundServiceType="remoteMessaging"
