@@ -70,6 +70,9 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
+        lifecycleScope.launch {
+            preferencesManager.setKey(PreferencesManager.IS_LOGGED, false) // Ask login every app start
+        }
         val lastVersion = preferencesManager
             .getValue(PreferencesManager.LAST_VERSION, "").toString()
         val currentVersion: String = BuildConfig.VERSION_NAME

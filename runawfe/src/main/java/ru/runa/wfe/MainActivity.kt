@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         val wfURL = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
         val isLoggedUser = preferencesManager
-            .getValue(PreferencesManager.SHOW_URL, false)
+            .getValue(PreferencesManager.IS_LOGGED, false)
         if (wfURL.isEmpty()) {
             navController.navigate(R.id.loginFragment)
             navController.navigate(R.id.login_to_settings)
