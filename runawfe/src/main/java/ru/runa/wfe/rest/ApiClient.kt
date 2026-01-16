@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
@@ -15,7 +16,6 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.runa.wfe.rest.services.AuthApiService
 import ru.runa.wfe.rest.services.ChatApiService
 import ru.runa.wfe.rest.services.TaskApiService
-import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
@@ -25,11 +25,13 @@ object ApiClient {
 
     fun setServerUrl(url: String) {
         val baseUrl = getBaseUrl(url)
-        if (checkServer(baseUrl)) {
-            BASE_URL = "$baseUrl/restapi/"
-        }
-        else {
-            Log.e("API Client", "Given URL is not a RunaWFE server")
+        CoroutineScope(Dispatchers.IO).launch {
+            if (checkServer(baseUrl)) {
+                BASE_URL = "$baseUrl/restapi/"
+            }
+            else {
+                Log.e("API Client", "Given URL is not a RunaWFE server")
+            }
         }
     }
 
@@ -49,33 +51,31 @@ object ApiClient {
         }
     }
 
-    private fun checkServer(url: String): Boolean {
+    private suspend fun checkServer(url: String): Boolean {
         val versionRequest = Request.Builder()
             .url("$url/wfe/version/")
             .build()
-        var version = ""
-        CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    version = OkHttpClient.Builder()
-                        .connectTimeout(2, TimeUnit.MINUTES)
-                        .build()
-                        .newCall(versionRequest).execute().body?.string() ?: ""
-                }  catch (e: SocketTimeoutException) {
-                    Log.e("API Client", e.message.toString())
-                }
+        return withContext(Dispatchers.IO) {
+            val response  = OkHttpClient.Builder()
+                    .connectTimeout(2, TimeUnit.MINUTES)
+                    .build()
+                    .newCall(versionRequest)
+                    .execute()
+            !response.body?.string().isNullOrBlank()
         }
-        return version.isNotBlank()
     }
 
     private val gson: Gson = GsonBuilder()
         .setDateFormat("dd.MM.yyyy HH:mm")
         .create()
 
-    private val retrofit : Retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create(gson))
-        .build()
+   private val retrofit: Retrofit by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+    }
 
     val authService: AuthApiService by lazy {
         Retrofit.Builder()
