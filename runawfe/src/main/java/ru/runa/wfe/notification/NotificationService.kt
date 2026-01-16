@@ -18,7 +18,6 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.paging.PagingData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -31,8 +30,9 @@ import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.dto.WfChatRoom
 import ru.runa.wfe.rest.dto.WfeChatMessage
-import ru.runa.wfe.rest.dto.WfePagedList
-import ru.runa.wfe.rest.dto.WfeTask
+import ru.runa.wfe.restapi.model.WfePagedListFilter
+import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
+import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.util.Date
 
@@ -204,20 +204,18 @@ class NotificationService : Service() {
 
     private suspend fun checkNewTasks() {
         val newTasks = ArrayList<WfeTask>()
-        val tasks: WfePagedList<WfeTask>? = ApiClient.taskService.getMyTasks(
-            PagingData.from(
-                newTasks
-            )
-        ).body()
-        if (tasks != null && tasks.data.isNotEmpty()) {
-            for (task in tasks.data) {
-                if (task.createDate.compareTo(lastTasksCheck) >= 0) {
-                    newTasks.add(task)
+        val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasks(WfePagedListFilter()).body()
+        if (tasks != null) {
+            if (tasks.total != null) {
+                for (task in tasks.data!!) {
+                    if ((task.createDate?.minus(lastTasksCheck))!! >= 0) {
+                        newTasks.add(task)
+                    }
                 }
+                newMessagesNotification(newTasks)
             }
-            newMessagesNotification(newTasks)
         }
-        lastTasksCheck = Date()
+        lastTasksCheck = Date().time
     }
 
     private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
@@ -233,7 +231,9 @@ class NotificationService : Service() {
                 NotificationType.TASK
             )
         } else if (newTasks.size > 0) {
-            showNotification(newTasks[0].name, newTasks[0].description,  NotificationType.TASK)
+            showNotification(newTasks[0].name.toString(),
+                newTasks[0].description.toString(),
+                NotificationType.TASK)
         }
     }
 
@@ -280,7 +280,7 @@ class NotificationService : Service() {
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
-        private var lastTasksCheck: Date = Date()
+        private var lastTasksCheck: Long = Date().time
         private var lastChatsCheck: Date = Date()
     }
 }

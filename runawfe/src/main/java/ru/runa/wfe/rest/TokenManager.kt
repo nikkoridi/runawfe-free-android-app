@@ -2,7 +2,7 @@ package ru.runa.wfe.rest
 
 import android.util.Log
 import ru.runa.wfe.R
-import ru.runa.wfe.rest.dto.WfeCredentials
+import ru.runa.wfe.restapi.model.WfeCredentials
 import ru.runa.wfe.ui.login.LoginResult
 
 // TODO: where to store it on device
@@ -37,9 +37,6 @@ object TokenManager {
         } catch (exception: Exception) {
             Log.e("TokenManager", "Unknown error: ${exception.localizedMessage}")
             LoginResult(false, R.string.undefined_error)
-        } finally {
-            credentials.login = ""
-            credentials.password = ""
         }
     }
 }
