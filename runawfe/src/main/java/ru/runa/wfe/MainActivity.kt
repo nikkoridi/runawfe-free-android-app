@@ -43,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         preferencesManager = PreferencesManager(this)
         val wfURL = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
+        ApiClient.setServerUrl(wfURL)
         val isLoggedUser = preferencesManager
             .getValue(PreferencesManager.IS_LOGGED, false)
         if (wfURL.isEmpty()) {

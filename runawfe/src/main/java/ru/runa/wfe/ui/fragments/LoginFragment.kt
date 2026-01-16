@@ -37,7 +37,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         super.onCreate(savedInstanceState)
         preferencesManager = PreferencesManager(view.context)
         val login = binding.login
-        val password = binding.login
+        val password = binding.password
         val error = binding.errorMessage
         val loginButton = binding.loginButton
 
