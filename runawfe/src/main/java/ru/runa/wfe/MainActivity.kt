@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -36,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         registerReceiver(permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
-            Context.RECEIVER_NOT_EXPORTED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0)
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
         as NavHostFragment
@@ -67,14 +68,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startNotificationService() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            val notificationServiceIntent = Intent(this, NotificationService::class.java)
-            startForegroundService(notificationServiceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+               requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
         else {
-            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+            val notificationServiceIntent = Intent(this, NotificationService::class.java)
+            startForegroundService(notificationServiceIntent)
         }
     }
 
@@ -109,7 +110,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this,
                 R.string.permission_given,
                 Toast.LENGTH_LONG).show()
-            NotificationService
         }
         else {
             Snackbar
