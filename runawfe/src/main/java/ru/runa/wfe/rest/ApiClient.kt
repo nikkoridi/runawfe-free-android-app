@@ -2,8 +2,10 @@ package ru.runa.wfe.rest
 
 import android.net.Uri
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.module.SimpleModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,7 +14,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
+import ru.runa.wfe.rest.dto.CustomLongDeserializer
 import ru.runa.wfe.rest.services.AuthApiService
 import ru.runa.wfe.rest.services.ChatApiService
 import ru.runa.wfe.rest.services.TaskApiService
@@ -69,15 +73,21 @@ object ApiClient {
         }
     }
 
-    private val gson: Gson = GsonBuilder()
-        .setDateFormat("dd.MM.yyyy HH:mm")
-        .create()
+    private val module = SimpleModule().apply {
+        addDeserializer(Long::class.javaPrimitiveType, CustomLongDeserializer())
+        addDeserializer(Long::class.java, CustomLongDeserializer())
+    }
+    private val mapper = ObjectMapper()
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        .registerModule(module)
+
 
    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(JacksonConverterFactory.create(mapper))
             .build()
     }
 

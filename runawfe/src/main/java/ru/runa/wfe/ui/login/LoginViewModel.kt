@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.TokenManager
-import ru.runa.wfe.rest.dto.WfeCredentials
+import ru.runa.wfe.restapi.model.WfeCredentials
 
 data class LoginResult (
     val success: Boolean = false,
