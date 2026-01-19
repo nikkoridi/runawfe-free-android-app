@@ -15,6 +15,7 @@ import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 class SettingsFragment : Fragment(R.layout.settings_fragment) {
@@ -40,7 +41,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         if (isUrlChanged) {
             findNavController().navigate(R.id.settings_to_login)
         } else {
-            findNavController().popBackStack()
+            findNavController().navigateUp()
         }
     }
 
@@ -72,6 +73,12 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             isShowUrl = isChecked
         }
 
+        changeURLView.setOnQueryTextFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) {
+                onUrlChanged()
+            }
+        }
+
         if (childFragmentManager.findFragmentById(R.id.notificationSettingsContainer) == null) {
             childFragmentManager
                 .beginTransaction()
@@ -84,11 +91,24 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         lifecycleScope.launch {
             preferencesManager.setKey(PreferencesManager.SHOW_URL, isShowUrl)
         }
+        onUrlChanged()
+    }
+
+    private fun onUrlChanged() {
         val changeUrl = changeURLView.query.toString()
-        isUrlChanged = changeUrl != preferencesManager
+        val oldUrl = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
-        lifecycleScope.launch {
-            preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+        if (changeUrl != oldUrl) {
+            lifecycleScope.launch {
+                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+            }
+            isUrlChanged = ApiClient.getBaseUrl(changeUrl) != ApiClient.getBaseUrl(oldUrl)
+            if (isUrlChanged) {
+                lifecycleScope.launch {
+                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                }
+                ApiClient.setServerUrl(changeUrl)
+            }
         }
     }
 

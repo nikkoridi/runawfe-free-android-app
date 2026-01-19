@@ -16,7 +16,6 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import ru.runa.wfe.rest.services.AuthApiService
 import ru.runa.wfe.rest.services.ChatApiService
 import ru.runa.wfe.rest.services.TaskApiService
-import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
@@ -27,11 +26,15 @@ object ApiClient {
     fun setServerUrl(url: String) {
         val baseUrl = getBaseUrl(url)
         CoroutineScope(Dispatchers.IO).launch {
-            if (checkServer(baseUrl)) {
-                BASE_URL = "$baseUrl/restapi/"
-            }
-            else {
-                Log.e("API Client", "Given URL is not a RunaWFE server")
+            try {
+                if (checkServer(baseUrl)) {
+                    BASE_URL = "$baseUrl/restapi/"
+                }
+                else {
+                    Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
+                }
+            } catch (ex: Exception) {
+                Log.e(this::class.simpleName, ex.message.toString())
             }
         }
     }
@@ -41,7 +44,7 @@ object ApiClient {
         .callTimeout(1, TimeUnit.MINUTES)
         .build()
 
-    private fun getBaseUrl(url: String): String {
+    fun getBaseUrl(url: String): String {
         try {
             val baseUrl = Uri.parse(url)
             val port = if (baseUrl.port != -1) ":${baseUrl.port}" else ""
