@@ -26,11 +26,15 @@ object ApiClient {
     fun setServerUrl(url: String) {
         val baseUrl = getBaseUrl(url)
         CoroutineScope(Dispatchers.IO).launch {
-            if (checkServer(baseUrl)) {
-                BASE_URL = "$baseUrl/restapi/"
-            }
-            else {
-                Log.e("API Client", "Given URL is not a RunaWFE server")
+            try {
+                if (checkServer(baseUrl)) {
+                    BASE_URL = "$baseUrl/restapi/"
+                }
+                else {
+                    Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
+                }
+            } catch (ex: Exception) {
+                Log.e(this::class.simpleName, ex.message.toString())
             }
         }
     }
@@ -40,7 +44,7 @@ object ApiClient {
         .callTimeout(1, TimeUnit.MINUTES)
         .build()
 
-    private fun getBaseUrl(url: String): String {
+    fun getBaseUrl(url: String): String {
         try {
             val baseUrl = Uri.parse(url)
             val port = if (baseUrl.port != -1) ":${baseUrl.port}" else ""
