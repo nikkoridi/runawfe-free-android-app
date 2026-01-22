@@ -34,6 +34,7 @@ import ru.runa.wfe.restapi.model.WfePagedListFilter
 import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.PermissionsConstants
+import java.time.OffsetDateTime
 import java.util.Date
 
 class NotificationService : Service() {
@@ -172,7 +173,7 @@ class NotificationService : Service() {
                         var readAllNew = false
                         while (!readAllNew && chat.hasNext()) {
                             val message = chat.next()
-                            if (message.createDate.compareTo(lastChatsCheck) >= 0) {
+                            if (message.createDate >= lastChatsCheck) {
                                 newMessages.add(message)
                             }
                             else {
@@ -208,14 +209,14 @@ class NotificationService : Service() {
         if (tasks != null) {
             if (tasks.total != null) {
                 for (task in tasks.data!!) {
-                    if ((task.createDate?.minus(lastTasksCheck))!! >= 0) {
+                    if (task.createDate!! >= lastTasksCheck) {
                         newTasks.add(task)
                     }
                 }
                 newMessagesNotification(newTasks)
             }
         }
-        lastTasksCheck = Date().time
+        lastTasksCheck = OffsetDateTime.now()
     }
 
     private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
@@ -280,7 +281,7 @@ class NotificationService : Service() {
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
-        private var lastTasksCheck: Long = Date().time
+        private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
         private var lastChatsCheck: Date = Date()
     }
 }

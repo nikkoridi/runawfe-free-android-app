@@ -81,6 +81,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
     implementation 'com.squareup.retrofit2:converter-jackson:2.1.0'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1"
     implementation "androidx.activity:activity-ktx:1.10.1"
     implementation 'androidx.browser:browser:1.8.0'
