@@ -10,6 +10,7 @@ openApiGenerate {
     outputDir.set("${layout.buildDirectory.get()}/generated/api")
     apiPackage.set("ru.runa.wfe.restapi.client")
     modelPackage.set("ru.runa.wfe.restapi.model")
+    packageName.set("ru.runa.wfe.restapi")
     configOptions.put("openApiNullable", "false")
     configOptions.put("library", "jvm-retrofit2")
     configOptions.put("serializationLibrary", "jackson")
