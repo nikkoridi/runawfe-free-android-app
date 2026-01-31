@@ -17,6 +17,7 @@
         app:destination="@id/loginFragment"
         app:popUpTo="@id/settingsFragment"/>
     </fragment>
+
     <fragment
         android:id="@+id/loginFragment"
         android:name="ru.runa.wfe.ui.fragments.LoginFragment"
@@ -30,15 +31,13 @@
             app:destination="@id/settingsFragment"
             app:popUpTo="@id/loginFragment"/>
     </fragment>
-    <fragment
-        android:id="@+id/notificationSettingsFragment"
-        android:name="ru.runa.wfe.ui.notification.NotificationSettingsFragment"
-        android:label="NotificationSettingsFragment">
-        <action
-            android:id="@+id/notifications_to_main"
-            app:destination="@id/mainFragment"
-            app:popUpTo="@id/notificationSettingsFragment"/>
-    </fragment>
+
+    <activity
+        android:id="@+id/mainActivity"
+        android:name="ru.runa.wfe.MainActivity"
+        android:label="MainActivity">
+    </activity>
+
     <fragment
         android:id="@+id/mainFragment"
         android:name="ru.runa.wfe.ui.fragments.WebFragment"
@@ -48,4 +47,5 @@
         app:destination="@id/settingsFragment"
         app:popUpTo="@id/mainFragment"/>
     </fragment>
+
 </navigation>
