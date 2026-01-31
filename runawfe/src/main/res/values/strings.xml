@@ -18,6 +18,7 @@
     <string name="not_found_login">Пользователь не найден</string>
     <string name="invalid_session">Сессия не валидна</string>
     <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
+    <string name="token_error">Ошибка токена сервера (устарел или не может быть проверен)</string>
     <string name="undefined_error">Ошибка</string>
 
     <string name="notifications_service_title">Сервис уведомлений запущен</string>
