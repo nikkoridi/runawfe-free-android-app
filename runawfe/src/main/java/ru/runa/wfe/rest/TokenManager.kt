@@ -41,7 +41,8 @@ object TokenManager {
 
     private fun checkToken(token: String = getToken()): Boolean {
         val payload = getTokenPayloadString(token)
-        return payload.isNotEmpty() && checkExpiration(payload)
+        return (!payload.isBlank() || payload.isNotEmpty())
+                && checkExpiration(payload)
     }
 
     suspend fun loadToken(preferencesManager: PreferencesManager): Boolean {

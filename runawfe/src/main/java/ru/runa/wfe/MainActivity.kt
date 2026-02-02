@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity() {
                 if (tokenLoadSuccess) {
                     navController.navigate(R.id.mainFragment)
                 } else {
+                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     navController.navigate(R.id.loginFragment)
                 }
             }
