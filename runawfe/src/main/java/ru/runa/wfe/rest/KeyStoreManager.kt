@@ -2,6 +2,7 @@ package ru.runa.wfe.rest
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -47,7 +48,7 @@ object KeyStoreManager {
             .secretKey
         return key
     }
-    
+
     fun encrypt(data: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
@@ -63,8 +64,15 @@ object KeyStoreManager {
         val iv = base64Decoded.take( IV_SIZE).toByteArray()
         val textWithTag = base64Decoded.drop(IV_SIZE).toByteArray()
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_SIZE * 8, iv))
-        return cipher.doFinal(textWithTag).toString(charset)
+        if (iv.size != IV_SIZE) {
+            Log.e(this.javaClass.simpleName,
+                "Decrypt error: iv size should be ${IV_SIZE }, got ${iv.size}")
+        }
+        else {
+            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_SIZE * 8, iv))
+            return cipher.doFinal(textWithTag).toString(charset)
+        }
+        return ""
     }
 
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
