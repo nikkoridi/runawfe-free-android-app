@@ -47,9 +47,12 @@ object TokenManager {
 
     suspend fun loadToken(preferencesManager: PreferencesManager): Boolean {
         try {
-            val token = preferencesManager
+            val loadedToken = preferencesManager
                 .getSecureValue(PreferencesManager.TOKEN, String::class.java)
-            val check = checkToken(token)
+            val check = checkToken(loadedToken)
+            if (check) {
+                this.token = loadedToken
+            }
             return check
         } catch (ex: Exception) {
             Log.e(this.javaClass.simpleName, ex.message.toString())
