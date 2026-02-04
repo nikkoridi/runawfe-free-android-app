@@ -86,8 +86,7 @@ class MainActivity : AppCompatActivity() {
             requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
         else {
-            val notificationServiceIntent = Intent(this, NotificationService::class.java)
-            startForegroundService(notificationServiceIntent)
+            startForegroundService(Intent(this, NotificationService::class.java))
         }
     }
 
@@ -136,6 +135,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(permissionReceiver)
+        stopService(Intent(this, NotificationService::class.java))
     }
 
     companion object {
