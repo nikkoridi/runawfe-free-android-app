@@ -119,7 +119,7 @@ class NotificationService : Service() {
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = createChannel(1,
+        val serviceChannel = getOrCreateChannel(1,
             NotificationType.DEFAULT,
             this.getString(R.string.notifications_settings),
             this.getString(R.string.notifications_service_message))
@@ -149,12 +149,12 @@ class NotificationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
 
-            tasksChannel = createChannel(importance,
+            tasksChannel = getOrCreateChannel(importance,
                 NotificationType.TASK,
                 this.getString(R.string.tasks_channel_title),
                 this.getString(R.string.tasks_channel_description))
 
-            messagesChannel = createChannel(importance,
+            messagesChannel = getOrCreateChannel(importance,
                 NotificationType.MESSAGE,
                 this.getString(R.string.messages_channel_title),
                 this.getString(R.string.messages_channel_description))
@@ -164,17 +164,19 @@ class NotificationService : Service() {
         }
     }
 
-    private fun createChannel(importance: Int,
+    private fun getOrCreateChannel(importance: Int,
                               type: NotificationType,
                               title: String,
                               channelDescription: String): NotificationChannel {
-        return NotificationChannel(
-            type.channelId,
-            title,
-            importance
-        ).apply {
-            description = channelDescription
-        }
+       val channel = notificationManager.getNotificationChannel(type.channelId)
+           ?: return NotificationChannel(
+               type.channelId,
+               title,
+               importance
+           ).apply {
+               description = channelDescription
+           }
+        return channel
     }
 
     private suspend fun checkNewChatMessages() {
