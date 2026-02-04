@@ -213,7 +213,7 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newMessages.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newMessages.size)}",
+                "${newMessages.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.messages_count, newMessages.size)}",
                 notificationMessageText.toString(),
                 NotificationType.MESSAGE
             )
