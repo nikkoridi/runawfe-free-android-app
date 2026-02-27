@@ -5,7 +5,6 @@ import android.util.Log
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,23 +16,35 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.jackson.JacksonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import ru.runa.wfe.rest.dto.CustomLongDeserializer
-import ru.runa.wfe.rest.services.AuthApiService
-import ru.runa.wfe.rest.services.ChatApiService
-import ru.runa.wfe.rest.services.TaskApiService
+import ru.runa.wfe.restapi.client.AuthControllerApi
+import ru.runa.wfe.restapi.client.ChatControllerApi
+import ru.runa.wfe.restapi.client.TaskControllerApi
+import ru.runa.wfe.restapi.infrastructure.ApiClient
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    private var BASE_URL: String = "http://10.0.2.2:8080/restapi/"
+    private var BASE_URL: String = "http://10.0.2.2:8080/"
+
+    private lateinit var basicApiClient: ApiClient
 
     val tokenManager: TokenManager = TokenManager
+
+    private val okHttpClientBuilder = OkHttpClient.Builder()
+        .callTimeout(1, TimeUnit.MINUTES)
+
+    private val mapper = ObjectMapper()
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        .registerModules(JavaTimeModule())
+        .findAndRegisterModules()
 
     fun setServerUrl(url: String) {
         val baseUrl = getBaseUrl(url)
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 if (checkServer(baseUrl)) {
-                    BASE_URL = "$baseUrl/restapi/"
+                    BASE_URL = baseUrl
+                    initBasicApiClient()
                 }
                 else {
                     Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
@@ -44,10 +55,17 @@ object ApiClient {
         }
     }
 
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(ApiInterceptor())
-        .callTimeout(1, TimeUnit.MINUTES)
-        .build()
+    private fun initBasicApiClient() {
+        basicApiClient = ApiClient(
+            BASE_URL,
+            okHttpClientBuilder,
+            mapper,
+            null,
+            listOf(),
+            listOf(JacksonConverterFactory.create(mapper))
+        )
+        basicApiClient.addAuthorization("token", ApiInterceptor())
+    }
 
     fun getBaseUrl(url: String): String {
         try {
@@ -74,39 +92,22 @@ object ApiClient {
         }
     }
 
-    private val module = SimpleModule().apply {
-        addDeserializer(Long::class.javaPrimitiveType, CustomLongDeserializer())
-        addDeserializer(Long::class.java, CustomLongDeserializer())
-    }
-    private val mapper = ObjectMapper()
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-        .registerModules(JavaTimeModule())
-        .findAndRegisterModules()
-
-   private val retrofit: Retrofit by lazy {
+    val authService: AuthControllerApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(okHttpClient)
-            .addConverterFactory(JacksonConverterFactory.create(mapper))
-            .build()
-    }
-
-    val authService: AuthApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(OkHttpClient())
+            .client(okHttpClientBuilder.build())
+            // Jackson doesn't work well with text/plain responses
             .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(AuthApiService::class.java)
+            .create(AuthControllerApi::class.java)
     }
 
-    val chatService: ChatApiService by lazy {
-        retrofit.create(ChatApiService::class.java)
+    val chatService: ChatControllerApi by lazy {
+        basicApiClient.createService(ChatControllerApi::class.java)
     }
 
-    val taskService: TaskApiService by lazy {
-        retrofit.create(TaskApiService::class.java)
+    val taskService: TaskControllerApi by lazy {
+        basicApiClient.createService(TaskControllerApi::class.java)
     }
 }

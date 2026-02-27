@@ -19,7 +19,7 @@ object TokenManager {
 
     suspend fun login(credentials: WfeCredentials): LoginResult {
         return try {
-            val response = ApiClient.authService.basic(credentials)
+            val response = ApiClient.authService.basicUsingPOST(credentials)
             if (response.isSuccessful) {
                 token = response.body().toString()
                 return  LoginResult(true)

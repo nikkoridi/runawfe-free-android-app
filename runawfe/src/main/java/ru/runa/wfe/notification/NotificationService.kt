@@ -28,14 +28,12 @@ import ru.runa.wfe.MainActivity
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
-import ru.runa.wfe.rest.dto.WfChatRoom
-import ru.runa.wfe.rest.dto.WfeChatMessage
+import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfePagedListFilter
 import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
-import java.util.Date
 
 class NotificationService : Service() {
     private val notificationManager by lazy {
@@ -161,19 +159,20 @@ class NotificationService : Service() {
     }
 
     private suspend fun checkNewChatMessages() {
-        val chatRooms: Collection<WfChatRoom>? = ApiClient.chatService.getChatRooms().body()
+        val chatRooms: List<ru.runa.wfe.restapi.model.WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
         if (chatRooms != null) {
-            val newMessages = ArrayList<WfeChatMessage>()
+            val newMessages = ArrayList<MessageAddedBroadcast>()
             for (room in chatRooms) {
-                if (room.newMessagesCount > 0) {
-                    val processId = room.getId()
-                    val chatRoomMessages = ApiClient.chatService.getChatMessages(processId).body()
+                if (room.newMessagesCount!! > 0) {
+                    val processId = room.id
+                    val chatRoomMessages =
+                        processId?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
                     if (chatRoomMessages != null) {
-                        val chat: Iterator<WfeChatMessage> = chatRoomMessages.iterator()
+                        val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
                         var readAllNew = false
                         while (!readAllNew && chat.hasNext()) {
                             val message = chat.next()
-                            if (message.createDate >= lastChatsCheck) {
+                            if (message.createDate?.isAfter(lastChatsCheck) == true) { // TODO:
                                 newMessages.add(message)
                             }
                             else {
@@ -185,10 +184,10 @@ class NotificationService : Service() {
             }
             newChatMessagesNotification(newMessages)
         }
-        lastChatsCheck = Date()
+        lastChatsCheck =  OffsetDateTime.now()
     }
 
-    private fun newChatMessagesNotification(newMessages: ArrayList<WfeChatMessage>) {
+    private fun newChatMessagesNotification(newMessages: ArrayList<MessageAddedBroadcast>) {
         if (newMessages.size > 1) {
             val notificationMessageText = StringBuilder().apply {
                 for (newMessage in newMessages) {
@@ -205,7 +204,7 @@ class NotificationService : Service() {
 
     private suspend fun checkNewTasks() {
         val newTasks = ArrayList<WfeTask>()
-        val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasks(WfePagedListFilter()).body()
+        val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(WfePagedListFilter()).body()
         if (tasks != null) {
             if (tasks.total != null) {
                 for (task in tasks.data!!) {
@@ -282,7 +281,7 @@ class NotificationService : Service() {
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
-        private var lastChatsCheck: Date = Date()
+        private var lastChatsCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }
 
