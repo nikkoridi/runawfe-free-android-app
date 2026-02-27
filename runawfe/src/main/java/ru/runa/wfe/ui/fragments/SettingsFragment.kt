@@ -106,6 +106,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             if (isUrlChanged) {
                 lifecycleScope.launch {
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                 }
                 ApiClient.setServerUrl(changeUrl)
             }

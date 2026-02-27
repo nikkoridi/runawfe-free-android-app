@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -13,6 +15,7 @@ import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.databinding.LoginFragmentBinding
+import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.login.LoginViewModel
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
@@ -44,38 +47,47 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         val settingsButton = binding.settingsButton
 
         loginButton.setOnClickListener {
-            val loginValue = login.text.toString().trim()
-            val passwordValue = password.text.toString().trim()
-            loginViewModel.login(loginValue, passwordValue) { loginResult ->
-                if (loginResult.success) {
-                    if (preferencesManager
-                        .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()) {
-                        val emptyURLDialogFragment = EmptyURLDialogFragment()
-                        emptyURLDialogFragment.activityOfMessage = requireActivity()
-                        emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
-                    }
-                    else {
-                        lifecycleScope.launch {
-                            preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
-                        }
-                        findNavController().navigate(R.id.login_to_main)
-                    }
-                }
-                else {
-                    if (loginResult.error != null) {
-                        error.text = getString(loginResult.error)
-                    }
-                    else {
-                        error.text = getString(R.string.auth_error)
-                    }
-                }
-            }
+            loginHandler(login, password, error)
         }
 
         settingsButton.setOnClickListener {
             findNavController().navigate(R.id.login_to_settings)
         }
 
+    }
+
+    private fun loginHandler(
+        login: EditText,
+        password: EditText,
+        error: TextView) {
+        if (preferencesManager
+                .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()
+        ) {
+            val emptyURLDialogFragment = EmptyURLDialogFragment()
+            emptyURLDialogFragment.activityOfMessage = requireActivity()
+            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+        }
+        val loginValue = login.text.toString().trim()
+        val passwordValue = password.text.toString().trim()
+        loginViewModel.login(loginValue, passwordValue) { loginResult ->
+            if (loginResult.success) {
+                lifecycleScope.launch {
+                    preferencesManager.setSecureKey(
+                        PreferencesManager.TOKEN,
+                        ApiClient.tokenManager.getToken()
+                    )
+                    ApiClient.tokenManager.clearToken()
+                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
+                }
+                findNavController().navigate(R.id.login_to_main)
+            } else {
+                if (loginResult.error != null) {
+                    error.text = getString(loginResult.error)
+                } else {
+                    error.text = getString(R.string.auth_error)
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {

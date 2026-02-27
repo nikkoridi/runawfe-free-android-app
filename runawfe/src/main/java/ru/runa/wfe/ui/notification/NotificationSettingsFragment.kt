@@ -79,6 +79,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                     lifecycleScope.launch {
                         preferencesManager.setKey(PreferencesManager.CHECK_DELAY, longNewValue)
                     }
+                    checkDelay?.summary = longNewValue.toString()
                     true
                 }
             }

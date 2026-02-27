@@ -13,10 +13,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import ru.runa.wfe.notification.NotificationService
+import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
@@ -39,27 +42,37 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0)
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
-        as NavHostFragment
+                as NavHostFragment
         navController = navHostFragment.navController
         preferencesManager = PreferencesManager(this)
-        val wfURL = preferencesManager
-            .getValue(PreferencesManager.WEBVIEW_URL, "")
-        val isLoggedUser = preferencesManager
-            .getValue(PreferencesManager.IS_LOGGED, false)
-        if (wfURL.isEmpty()) {
-            navController.navigate(R.id.loginFragment)
-            navController.navigate(R.id.login_to_settings)
-        }
-        else if (!isLoggedUser) {
-            navController.navigate(R.id.loginFragment)
-        }
-        else {
-            navController.navigate(R.id.mainFragment)
-        }
+
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            when(destination.id) {
+            when (destination.id) {
                 R.id.mainFragment -> {
                     startNotificationService()
+                }
+            }
+        }
+
+        loadDataAndNavigate()
+    }
+
+    private fun loadDataAndNavigate() {
+        lifecycleScope.launch {
+            val wfURL = preferencesManager
+                .getValue(PreferencesManager.WEBVIEW_URL, "")
+
+            if (wfURL.isEmpty()) {
+                navController.navigate(R.id.loginFragment)
+                navController.navigate(R.id.login_to_settings)
+            } else {
+                val tokenLoadSuccess = ApiClient.tokenManager.loadToken(preferencesManager)
+                preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
+                if (tokenLoadSuccess) {
+                    navController.navigate(R.id.mainFragment)
+                } else {
+                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    navController.navigate(R.id.loginFragment)
                 }
             }
         }
@@ -68,12 +81,11 @@ class MainActivity : AppCompatActivity() {
     private fun startNotificationService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-               requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED) {
+            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
         else {
-            val notificationServiceIntent = Intent(this, NotificationService::class.java)
-            startForegroundService(notificationServiceIntent)
+            startForegroundService(Intent(this, NotificationService::class.java))
         }
     }
 
@@ -122,6 +134,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(permissionReceiver)
+        stopService(Intent(this, NotificationService::class.java))
     }
 
     companion object {

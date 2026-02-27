@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -72,6 +73,10 @@ class NotificationService : Service() {
             sendBroadcast(permissionRequestIntent)
             return START_NOT_STICKY
         }
+        val lastCheck = preferencesManager
+            .getValue(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
+        lastTasksCheck = Date(lastCheck)
+        lastChatsCheck = Date(lastCheck)
 
         setNotifications()
         return START_STICKY
@@ -81,12 +86,25 @@ class NotificationService : Service() {
         if (::notificationServiceScope.isInitialized) {
             notificationServiceScope.cancel()
         }
+        saveLastCheckData()
         thread.quitSafely()
         unregisterReceiver(permissionReceiver)
         super.onDestroy()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        saveLastCheckData()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onBind(p0: Intent?): IBinder? = null
+
+    private fun saveLastCheckData() {
+        CoroutineScope(Dispatchers.IO).launch {
+            preferencesManager.setKey(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
+        }
+    }
 
     private fun setNotifications() {
         thread = HandlerThread("notificationsCheck")
@@ -100,7 +118,7 @@ class NotificationService : Service() {
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = createChannel(1,
+        val serviceChannel = getOrCreateChannel(1,
             NotificationType.DEFAULT,
             this.getString(R.string.notifications_settings),
             this.getString(R.string.notifications_service_message))
@@ -130,12 +148,12 @@ class NotificationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
 
-            tasksChannel = createChannel(importance,
+            tasksChannel = getOrCreateChannel(importance,
                 NotificationType.TASK,
                 this.getString(R.string.tasks_channel_title),
                 this.getString(R.string.tasks_channel_description))
 
-            messagesChannel = createChannel(importance,
+            messagesChannel = getOrCreateChannel(importance,
                 NotificationType.MESSAGE,
                 this.getString(R.string.messages_channel_title),
                 this.getString(R.string.messages_channel_description))
@@ -145,17 +163,19 @@ class NotificationService : Service() {
         }
     }
 
-    private fun createChannel(importance: Int,
+    private fun getOrCreateChannel(importance: Int,
                               type: NotificationType,
                               title: String,
                               channelDescription: String): NotificationChannel {
-        return NotificationChannel(
-            type.channelId,
-            title,
-            importance
-        ).apply {
-            description = channelDescription
-        }
+       val channel = notificationManager.getNotificationChannel(type.channelId)
+           ?: return NotificationChannel(
+               type.channelId,
+               title,
+               importance
+           ).apply {
+               description = channelDescription
+           }
+        return channel
     }
 
     private suspend fun checkNewChatMessages() {
@@ -195,7 +215,7 @@ class NotificationService : Service() {
                 }
             }
             showNotification(
-                "${newMessages.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newMessages.size)}",
+                "${newMessages.size} ${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.messages_count, newMessages.size)}",
                 notificationMessageText.toString(),
                 NotificationType.MESSAGE
             )
