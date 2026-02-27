@@ -13,6 +13,8 @@ openApiGenerate {
     packageName.set("ru.runa.wfe.restapi")
     configOptions.put("openApiNullable", "false")
     configOptions.put("library", "jvm-retrofit2")
+    configOptions.put("useCoroutines", "true")
+    configOptions.put("useResponseAsReturnType", "true")
     configOptions.put("serializationLibrary", "jackson")
     configOptions.put("failOnUnknownProperties", "false")
 }
