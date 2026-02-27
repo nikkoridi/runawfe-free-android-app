@@ -17,7 +17,6 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
 import ru.runa.wfe.notification.NotificationService
-import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
@@ -45,7 +44,6 @@ class MainActivity : AppCompatActivity() {
         preferencesManager = PreferencesManager(this)
         val wfURL = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
-        ApiClient.setServerUrl(wfURL)
         val isLoggedUser = preferencesManager
             .getValue(PreferencesManager.IS_LOGGED, false)
         if (wfURL.isEmpty()) {
