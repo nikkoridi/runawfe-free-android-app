@@ -86,7 +86,7 @@ class PreferencesManager(private val context: Context) {
         val SHOW_URL = booleanPreferencesKey("showUrl")
         val CHECK_DELAY = longPreferencesKey("checkDelay")
         val IS_LOGGED = booleanPreferencesKey("isLogged")
-        val LAST_CHECK = longPreferencesKey("lastCheck")
+        val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")
     }
 }

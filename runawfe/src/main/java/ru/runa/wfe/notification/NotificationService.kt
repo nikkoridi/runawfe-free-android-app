@@ -35,6 +35,8 @@ import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class NotificationService : Service() {
     private val notificationManager by lazy {
@@ -73,10 +75,12 @@ class NotificationService : Service() {
             sendBroadcast(permissionRequestIntent)
             return START_NOT_STICKY
         }
-        val lastCheck = preferencesManager
-            .getValue(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
-        lastTasksCheck = Date(lastCheck)
-        lastChatsCheck = Date(lastCheck)
+        val lastCheck = OffsetDateTime.parse(
+            preferencesManager
+            .getValue(PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).toString()))
+            .withOffsetSameLocal(ZoneOffset.UTC)
+        lastTasksCheck = lastCheck
+        lastChatsCheck = lastCheck
 
         setNotifications()
         return START_STICKY
@@ -102,7 +106,8 @@ class NotificationService : Service() {
 
     private fun saveLastCheckData() {
         CoroutineScope(Dispatchers.IO).launch {
-            preferencesManager.setKey(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
+            preferencesManager.setKey(PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).format(
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         }
     }
 
@@ -183,16 +188,18 @@ class NotificationService : Service() {
         if (chatRooms != null) {
             val newMessages = ArrayList<MessageAddedBroadcast>()
             for (room in chatRooms) {
-                if (room.newMessagesCount!! > 0) {
-                    val processId = room.id
+                if ((room.newMessagesCount ?: 0) > 0) {
                     val chatRoomMessages =
-                        processId?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
+                        room.id?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
                     if (chatRoomMessages != null) {
                         val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
                         var readAllNew = false
                         while (!readAllNew && chat.hasNext()) {
                             val message = chat.next()
-                            if (message.createDate?.isAfter(lastChatsCheck) == true) { // TODO:
+                            // New variable because smartcast won't work with custom getter
+                            val createDate = message.createDate
+                            if (createDate != null
+                                && lastChatsCheck.isBefore(createDate)) {
                                 newMessages.add(message)
                             }
                             else {
@@ -204,7 +211,7 @@ class NotificationService : Service() {
             }
             newChatMessagesNotification(newMessages)
         }
-        lastChatsCheck =  OffsetDateTime.now()
+        lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
     }
 
     private fun newChatMessagesNotification(newMessages: ArrayList<MessageAddedBroadcast>) {
@@ -225,17 +232,18 @@ class NotificationService : Service() {
     private suspend fun checkNewTasks() {
         val newTasks = ArrayList<WfeTask>()
         val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(WfePagedListFilter()).body()
-        if (tasks != null) {
-            if (tasks.total != null) {
-                for (task in tasks.data!!) {
-                    if (task.createDate!! >= lastTasksCheck) {
-                        newTasks.add(task)
-                    }
+        if (tasks?.data != null) {
+            for (task in tasks.data) {
+                // New variable because smartcast won't work with custom getter
+                val assignDate = task.assignDate
+                if (assignDate != null &&
+                    lastTasksCheck.isBefore(assignDate)) {
+                    newTasks.add(task)
                 }
-                newMessagesNotification(newTasks)
             }
+            newMessagesNotification(newTasks)
         }
-        lastTasksCheck = OffsetDateTime.now()
+        lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
     }
 
     private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
