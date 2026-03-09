@@ -19,7 +19,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.notification.NotificationService
-import ru.runa.wfe.rest.ApiClient
+import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                 navController.navigate(R.id.loginFragment)
                 navController.navigate(R.id.login_to_settings)
             } else {
-                val tokenLoadSuccess = ApiClient.tokenManager.loadToken(preferencesManager)
+                val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
                 preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                 if (tokenLoadSuccess) {
                     navController.navigate(R.id.mainFragment)

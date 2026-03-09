@@ -15,7 +15,7 @@ import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.databinding.LoginFragmentBinding
-import ru.runa.wfe.rest.ApiClient
+import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.ui.login.LoginViewModel
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
@@ -74,9 +74,9 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                 lifecycleScope.launch {
                     preferencesManager.setSecureKey(
                         PreferencesManager.TOKEN,
-                        ApiClient.tokenManager.getToken()
+                        TokenManager.getToken()
                     )
-                    ApiClient.tokenManager.clearToken()
+                    TokenManager.clearToken()
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
                 }
                 findNavController().navigate(R.id.login_to_main)
