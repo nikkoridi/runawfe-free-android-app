@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -63,17 +64,18 @@ class MainActivity : AppCompatActivity() {
                 .getValue(PreferencesManager.WEBVIEW_URL, "")
 
             if (wfURL.isEmpty()) {
-                navController.navigate(R.id.loginFragment)
-                navController.navigate(R.id.login_to_settings)
+                navController.navigate(R.id.settingsFragment,
+                    null,
+                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build())
             } else {
                 ApiClient.setServerUrl(wfURL)
                 val tokenLoadSuccess = ApiClient.tokenManager.loadToken(preferencesManager)
                 preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                 if (tokenLoadSuccess) {
+                    navController.popBackStack() // Don't return to login form by pressing back
                     navController.navigate(R.id.mainFragment)
                 } else {
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
-                    navController.navigate(R.id.loginFragment)
                 }
             }
         }
