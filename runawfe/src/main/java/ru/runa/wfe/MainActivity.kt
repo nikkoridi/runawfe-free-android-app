@@ -121,6 +121,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this,
                 R.string.permission_given,
                 Toast.LENGTH_LONG).show()
+            startForegroundService(Intent(this, NotificationService::class.java))
         }
         else {
             Snackbar
