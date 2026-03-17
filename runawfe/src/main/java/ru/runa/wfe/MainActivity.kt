@@ -15,8 +15,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
+import androidx.savedstate.SavedState
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.notification.NotificationService
@@ -42,19 +44,25 @@ class MainActivity : AppCompatActivity() {
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0)
 
+        preferencesManager = PreferencesManager(this)
+
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
                 as NavHostFragment
         navController = navHostFragment.navController
-        preferencesManager = PreferencesManager(this)
-
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.mainFragment -> {
-                    startNotificationService()
+        navController.addOnDestinationChangedListener(
+            object: NavController.OnDestinationChangedListener {
+                override fun onDestinationChanged(
+                    controller: NavController,
+                    destination: NavDestination,
+                    arguments: SavedState?
+                ) {
+                    if (destination.id == R.id.mainFragment) {
+                        startNotificationService()
+                        controller.removeOnDestinationChangedListener(this)
+                    }
                 }
             }
-        }
-
+        )
         loadDataAndNavigate()
     }
 
