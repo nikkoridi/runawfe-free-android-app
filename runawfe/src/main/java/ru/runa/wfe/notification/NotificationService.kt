@@ -63,7 +63,14 @@ class NotificationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!checkPermission()) {
+        val minutesCheckInterval: Int = CHECK_INTERVAL.toInt() / (1000 * 60)
+        val checkDelay: Int = preferencesManager.getValue(
+            PreferencesManager.CHECK_DELAY, minutesCheckInterval)
+        if (checkDelay != minutesCheckInterval) {
+            CHECK_INTERVAL = (checkDelay * 1000 * 60).toLong()
+        }
+
+        if (!checkPermission() || checkDelay == 0) {
             stopSelf()
             Log.e("NotificationsManager", "No required permission: "
                     + Manifest.permission.POST_NOTIFICATIONS)
@@ -127,14 +134,6 @@ class NotificationService : Service() {
         startForeground(1, serviceStartNotification)
 
         createNotificationChannels()
-
-        val checkDelay: Long = preferencesManager.getValue(
-            PreferencesManager.CHECK_DELAY,
-            CHECK_INTERVAL)
-
-        if (checkDelay != CHECK_INTERVAL) {
-            CHECK_INTERVAL = checkDelay
-        }
 
         notificationServiceScope.launch {
             while (isActive) {
@@ -296,7 +295,7 @@ class NotificationService : Service() {
     }
 
     companion object {
-        private var CHECK_INTERVAL: Long = 2*60*1000
+        private var CHECK_INTERVAL: Long = 3*60*1000
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel

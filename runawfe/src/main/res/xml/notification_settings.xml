@@ -2,7 +2,7 @@
 
     <PreferenceCategory app:title="@string/notifications_settings">
 
-        <EditTextPreference
+        <ru.runa.wfe.ui.notification.DurationPreference
             app:key="checkDelay"
             app:title="@string/check_delay_title"
             />

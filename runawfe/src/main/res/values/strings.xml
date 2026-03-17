@@ -38,6 +38,12 @@
         <item quantity="many">сообщений</item>
         <item quantity="other">сообщений</item>
     </plurals>
+    <plurals name="minutes">
+        <item quantity="one">минута</item>
+        <item quantity="few">минуты</item>
+        <item quantity="many">минут</item>
+        <item quantity="other">мин.</item>
+    </plurals>
     <string name="new_data_notifications">новых</string>
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
@@ -49,7 +55,7 @@
     <string name="permission_given">Разрешение получено</string>
     <string name="permission_error">Отложено получение разрешения</string>
 
-    <string name="check_delay_title">Интервал проверки новых задач и сообщений (милисекунды)</string>
+    <string name="check_delay_title">Интервал проверки</string>
     <string name="tasks_notifications_title">Уведомления для новых задач</string>
     <string name="messages_notifications_title">Уведомления для новых сообщений</string>
     <string name="summary_setup_notifications">Нажмите для перехода к настройкам</string>

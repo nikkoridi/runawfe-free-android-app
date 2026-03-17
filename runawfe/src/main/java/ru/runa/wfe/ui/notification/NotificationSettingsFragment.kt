@@ -7,18 +7,18 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.text.InputType
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.notification.NotificationType
+import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat
 
 class NotificationSettingsFragment : PreferenceFragmentCompat() {
     private lateinit var preferencesManager: PreferencesManager
@@ -53,23 +53,23 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    private fun checkDelaySummary(number: Int): String {
+        return "$number ${resources.getQuantityString(R.plurals.minutes, number)}"
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
         preferencesManager = PreferencesManager(requireContext())
-        val checkDelay: EditTextPreference? = findPreference("checkDelay")
+        val checkDelay: DurationPreference? = findPreference("checkDelay")
 
-        val savedCheckDelay: Long = preferencesManager.getValue(PreferencesManager.CHECK_DELAY,
-                60*1000)
-        checkDelay?.summary = savedCheckDelay.toString()
+        val savedCheckDelay: Int = preferencesManager.getValue(PreferencesManager.CHECK_DELAY,
+                3)
+        checkDelay?.summary = checkDelaySummary(savedCheckDelay)
 
-        checkDelay?.setOnBindEditTextListener {
-            editText -> editText.inputType = InputType.TYPE_CLASS_NUMBER
-        }
-
-        findPreference<EditTextPreference>("checkDelay")
+        findPreference<DurationPreference>("checkDelay")
             ?.setOnPreferenceChangeListener { _, newValue ->
-                val longNewValue = newValue.toString().toLongOrNull()
-                if (longNewValue == null) {
+                val newCheckIntervalValue = newValue.toString().toIntOrNull()
+                if (newCheckIntervalValue == null) {
                     Toast.makeText(context,
                         this.getString(R.string.settings_empty_value_message),
                         Toast.LENGTH_SHORT).show()
@@ -77,12 +77,27 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                 }
                 else {
                     lifecycleScope.launch {
-                        preferencesManager.setKey(PreferencesManager.CHECK_DELAY, longNewValue)
+                        preferencesManager.setKey(PreferencesManager.CHECK_DELAY, newCheckIntervalValue)
                     }
-                    checkDelay?.summary = longNewValue.toString()
+                    checkDelay?.let {
+                        it.summary = checkDelaySummary(newCheckIntervalValue)
+                    }
                     true
                 }
             }
+    }
+
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        if (preference is DurationPreference) {
+            val dialogFragment: DialogFragment =
+                DurationPreferenceDialogFragmentCompat.newInstance(preference.key)
+            // Currently (March of 2026) setTargetFragment must be called despite the deprecation
+            @Suppress("DEPRECATION")
+            dialogFragment.setTargetFragment(this, 0)
+            dialogFragment.show(parentFragmentManager, null)
+        } else {
+            super.onDisplayPreferenceDialog(preference)
+        }
     }
 
     private fun runRingtonePicker(title: String, key: String) {
