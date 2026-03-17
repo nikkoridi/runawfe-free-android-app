@@ -40,20 +40,25 @@ object TokenManager {
     }
 
     private fun checkToken(token: String = getToken()): Boolean {
-        val payload = getTokenPayloadString(token)
-        return (!payload.isBlank() || payload.isNotEmpty())
-                && checkExpiration(payload)
+        if (token.isNotEmpty()) {
+            val payload = getTokenPayloadString(token)
+            return (payload.isNotBlank() || payload.isNotEmpty())
+                    && checkExpiration(payload)
+        }
+        return false
     }
 
     suspend fun loadToken(preferencesManager: PreferencesManager): Boolean {
         try {
             val loadedToken = preferencesManager
                 .getSecureValue(PreferencesManager.TOKEN, String::class.java)
-            val check = checkToken(loadedToken)
-            if (check) {
-                this.token = loadedToken
-            }
-            return check
+            loadedToken?.let {
+                if (checkToken(it)) {
+                    this.token = loadedToken
+                    return true
+                }
+                return false
+            } ?: false
         } catch (ex: Exception) {
             Log.e(this.javaClass.simpleName, ex.message.toString())
         }

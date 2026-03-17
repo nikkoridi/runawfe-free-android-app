@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import ru.runa.wfe.rest.KeyStoreManager
-import kotlin.jvm.Throws
 
 private const val PREFERENCES_NAME = "app_preferences"
 
@@ -55,10 +54,12 @@ class PreferencesManager(private val context: Context) {
     }
 
     @Throws(Exception::class)
-    suspend fun<T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T {
-        val encryptedValue = context.dataStore.data.first()[key].toString()
-        val value = KeyStoreManager.decrypt(encryptedValue)
-        return gson.fromJson(value, type)
+    suspend fun<T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {
+        val encryptedValue = context.dataStore.data.first()[key]
+        if (encryptedValue != null) {
+            return gson.fromJson(KeyStoreManager.decrypt(encryptedValue.toString()), type)
+        }
+        return null
     }
 
     suspend fun setSecureKey(key: Preferences.Key<String>, value: String) {
