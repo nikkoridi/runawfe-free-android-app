@@ -23,7 +23,6 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.addCallback
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -44,21 +43,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
     private lateinit var settingsButton: ImageButton
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        requireActivity()
-            .onBackPressedDispatcher
-            .addCallback(this) {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else if (parentFragmentManager.backStackEntryCount >= 1) {
-                        parentFragmentManager.popBackStack()
-                    }
-                else {
-                    requireActivity().onBackPressedDispatcher.onBackPressed()
-                }
-            }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -88,7 +72,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             lifecycleScope.launch {
                 preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, webView.url.toString())
             }
-            findNavController().navigate(R.id.main_to_settings)
+            findNavController().navigate(R.id.to_settings)
         }
 
         webView.webViewClient = object : WebViewClient() {

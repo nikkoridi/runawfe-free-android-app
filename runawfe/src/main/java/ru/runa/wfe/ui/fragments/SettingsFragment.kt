@@ -8,10 +8,8 @@ import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SearchView
-import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
@@ -26,24 +24,6 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
     private var isUrlChanged: Boolean = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        requireActivity()
-            .onBackPressedDispatcher
-            .addCallback(this) {
-                savePreferences()
-                goBack()
-            }
-    }
-
-    private fun goBack() {
-        if (isUrlChanged) {
-            findNavController().navigate(R.id.settings_to_login)
-        } else {
-            findNavController().navigateUp()
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -66,7 +46,6 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         backButton.setOnClickListener {
             savePreferences()
-            goBack()
         }
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
