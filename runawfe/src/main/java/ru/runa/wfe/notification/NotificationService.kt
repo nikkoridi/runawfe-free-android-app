@@ -1,6 +1,7 @@
 package ru.runa.wfe.notification
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -123,6 +124,7 @@ class NotificationService : Service() {
         // Notify about service start
         val serviceStartNotification = NotificationCompat.Builder(this,
             NotificationType.DEFAULT.channelId)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
@@ -276,10 +278,15 @@ class NotificationService : Service() {
         val notification = notificationBuilder.build()
 
         // Android 13 (API level 33) and higher requires a permission
+        notifyAndCheckPermission(notification)
+    }
+
+    private fun notifyAndCheckPermission(notification: Notification) {
         if (checkPermission()) {
             notificationManager.notify(
                 NOTIFICATION_ID + 1,
-                notification)
+                notification
+            )
             NOTIFICATION_ID += 1
         }
     }
