@@ -34,7 +34,7 @@ class PreferencesManager(private val context: Context) {
 
     suspend fun<T> hasKey(key: Preferences.Key<T>) = context.dataStore.edit { it.contains(key) }
 
-    fun<T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<Any?> {
+    fun<T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
         return context.dataStore.data.catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
