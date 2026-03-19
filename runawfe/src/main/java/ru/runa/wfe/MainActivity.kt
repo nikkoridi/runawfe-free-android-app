@@ -27,7 +27,6 @@ import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
-
     private lateinit var navController: NavController
 
     private val permissionReceiver = object : BroadcastReceiver() {

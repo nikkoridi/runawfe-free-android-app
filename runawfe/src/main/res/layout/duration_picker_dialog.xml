@@ -6,6 +6,5 @@
         android:id="@+id/durationPicker"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:timePickerMode="spinner"
-        />
+        android:timePickerMode="spinner" />
 </androidx.constraintlayout.widget.ConstraintLayout>
