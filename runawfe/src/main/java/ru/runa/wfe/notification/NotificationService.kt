@@ -230,7 +230,7 @@ class NotificationService : Service() {
         ).body()
         if (tasks != null && tasks.data.isNotEmpty()) {
             for (task in tasks.data) {
-                if (task.createDate.compareTo(lastTasksCheck) >= 0) {
+                if (task.assignDate.compareTo(lastTasksCheck) >= 0) {
                     newTasks.add(task)
                 }
             }
