@@ -1,4 +1,4 @@
-package ru.runa.wfe.rest
+package ru.runa.wfe.data
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties

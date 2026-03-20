@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-import ru.runa.wfe.rest.KeyStoreManager
 import kotlin.jvm.Throws
 
 private const val PREFERENCES_NAME = "app_preferences"
