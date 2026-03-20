@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
-import ru.runa.wfe.PreferencesManager
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
@@ -106,7 +106,8 @@ class NotificationService : Service() {
 
     private fun saveLastCheckData() {
         CoroutineScope(Dispatchers.IO).launch {
-            preferencesManager.setKey(PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).format(
+            preferencesManager.setKey(
+                PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).format(
                 DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         }
     }

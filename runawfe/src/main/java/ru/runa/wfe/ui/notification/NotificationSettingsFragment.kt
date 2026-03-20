@@ -16,7 +16,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
-import ru.runa.wfe.PreferencesManager
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.notification.NotificationType
 
@@ -58,7 +58,8 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         preferencesManager = PreferencesManager(requireContext())
         val checkDelay: EditTextPreference? = findPreference("checkDelay")
 
-        val savedCheckDelay: Long = preferencesManager.getValue(PreferencesManager.CHECK_DELAY,
+        val savedCheckDelay: Long = preferencesManager.getValue(
+            PreferencesManager.CHECK_DELAY,
                 60*1000)
         checkDelay?.summary = savedCheckDelay.toString()
 

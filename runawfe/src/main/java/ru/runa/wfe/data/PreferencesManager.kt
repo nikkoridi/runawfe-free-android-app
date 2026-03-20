@@ -1,4 +1,4 @@
-package ru.runa.wfe
+package ru.runa.wfe.data
 
 import android.content.Context
 import androidx.datastore.core.IOException

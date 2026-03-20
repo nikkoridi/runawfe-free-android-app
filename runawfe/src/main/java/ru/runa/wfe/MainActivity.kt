@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationService
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.ui.notification.PermissionsConstants
