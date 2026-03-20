@@ -27,16 +27,16 @@
     <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>
     <plurals name="tasks_count">
-        <item quantity="one">задача</item>
-        <item quantity="few">задачи</item>
-        <item quantity="many">задач</item>
-        <item quantity="other">задач</item>
+        <item quantity="one">%d задача</item>
+        <item quantity="few">%d задачи</item>
+        <item quantity="many">%d задач</item>
+        <item quantity="other">%d задач</item>
     </plurals>
     <plurals name="messages_count">
-        <item quantity="one">сообщение</item>
-        <item quantity="few">сообщения</item>
-        <item quantity="many">сообщений</item>
-        <item quantity="other">сообщений</item>
+        <item quantity="one">%d сообщение</item>
+        <item quantity="few">%d сообщения</item>
+        <item quantity="many">%d сообщений</item>
+        <item quantity="other">%d сообщений</item>
     </plurals>
     <plurals name="minutes">
         <item quantity="one">минута</item>
@@ -44,7 +44,7 @@
         <item quantity="many">минут</item>
         <item quantity="other">мин.</item>
     </plurals>
-    <string name="new_data_notifications">новых</string>
+    <string name="new_data_notifications">Hовых:</string>
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
 
