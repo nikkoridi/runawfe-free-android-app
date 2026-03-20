@@ -66,7 +66,7 @@ object KeyStoreManager {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         if (iv.size != IV_SIZE) {
             Log.e(this.javaClass.simpleName,
-                "Decrypt error: iv size should be ${IV_SIZE }, got ${iv.size}")
+                "Decrypt error: iv size should be $IV_SIZE, got ${iv.size}")
         }
         else {
             cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_SIZE * 8, iv))

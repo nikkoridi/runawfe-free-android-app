@@ -27,8 +27,6 @@ object ApiClient {
 
     private lateinit var basicApiClient: ApiClient
 
-    val tokenManager: TokenManager = TokenManager
-
     private val okHttpClientBuilder = OkHttpClient.Builder()
         .callTimeout(1, TimeUnit.MINUTES)
 
@@ -83,7 +81,7 @@ object ApiClient {
             .url("$url/wfe/version/")
             .build()
         return withContext(Dispatchers.IO) {
-            val response  = OkHttpClient.Builder()
+            val response = OkHttpClient.Builder()
                     .connectTimeout(2, TimeUnit.MINUTES)
                     .build()
                     .newCall(versionRequest)
