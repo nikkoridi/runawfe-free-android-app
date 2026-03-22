@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 object ApiClient {
     private var BASE_URL: String = "http://10.0.2.2:8080/"
 
-    private lateinit var basicApiClient: ApiClient
+    private var basicApiClient: ApiClient = ApiClient()
 
     private val okHttpClientBuilder = OkHttpClient.Builder()
         .callTimeout(1, TimeUnit.MINUTES)
@@ -82,7 +82,7 @@ object ApiClient {
             .build()
         return withContext(Dispatchers.IO) {
             val response = OkHttpClient.Builder()
-                    .connectTimeout(2, TimeUnit.MINUTES)
+                    .connectTimeout(30, TimeUnit.MILLISECONDS)
                     .build()
                     .newCall(versionRequest)
                     .execute()
