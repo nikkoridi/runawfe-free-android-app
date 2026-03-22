@@ -1,22 +1,15 @@
 package ru.runa.wfe.notification
 
 import android.Manifest
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +19,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import ru.runa.wfe.MainActivity
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
@@ -39,11 +31,10 @@ import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import ru.runa.wfe.notification.NotificationLogic.NotificationType
 
 class NotificationService : Service() {
-    private val notificationManager by lazy {
-        NotificationManagerCompat.from(this)
-    }
+    private lateinit var notificationLogic: NotificationLogic
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var thread: HandlerThread
     private lateinit var notificationServiceScope: CoroutineScope
@@ -60,6 +51,7 @@ class NotificationService : Service() {
     override fun onCreate() {
         super.onCreate()
         preferencesManager = PreferencesManager(this)
+        notificationLogic = NotificationLogic(this)
         registerReceiver(permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
             Context.RECEIVER_NOT_EXPORTED)
@@ -73,7 +65,7 @@ class NotificationService : Service() {
             CHECK_INTERVAL = (checkDelay * 1000 * 60).toLong()
         }
 
-        if (!checkPermission() || checkDelay == 0) {
+        if (!notificationLogic.checkPermission() || checkDelay == 0) {
             stopSelf()
             Log.e("NotificationsManager", "No required permission: "
                     + Manifest.permission.POST_NOTIFICATIONS)
@@ -136,14 +128,14 @@ class NotificationService : Service() {
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = getOrCreateChannel(1,
+        val serviceChannel = notificationLogic.getOrCreateChannel(1,
             NotificationType.DEFAULT,
             this.getString(R.string.notifications_settings),
             this.getString(R.string.notifications_service_message))
-        notificationManager.createNotificationChannel(serviceChannel)
+        NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
         startForeground(1, serviceStartNotification)
 
-        createNotificationChannels()
+        notificationLogic.createNotificationChannels()
 
         notificationServiceScope.launch {
             while (isActive) {
@@ -152,40 +144,6 @@ class NotificationService : Service() {
                 delay(CHECK_INTERVAL)
             }
         }
-    }
-
-    private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-
-            tasksChannel = getOrCreateChannel(importance,
-                NotificationType.TASK,
-                this.getString(R.string.tasks_channel_title),
-                this.getString(R.string.tasks_channel_description))
-
-            messagesChannel = getOrCreateChannel(importance,
-                NotificationType.MESSAGE,
-                this.getString(R.string.messages_channel_title),
-                this.getString(R.string.messages_channel_description))
-
-            notificationManager.createNotificationChannel(tasksChannel)
-            notificationManager.createNotificationChannel(messagesChannel)
-        }
-    }
-
-    private fun getOrCreateChannel(importance: Int,
-                              type: NotificationType,
-                              title: String,
-                              channelDescription: String): NotificationChannel {
-       val channel = notificationManager.getNotificationChannel(type.channelId)
-           ?: return NotificationChannel(
-               type.channelId,
-               title,
-               importance
-           ).apply {
-               description = channelDescription
-           }
-        return channel
     }
 
     private suspend fun checkNewChatMessages() {
@@ -217,7 +175,7 @@ class NotificationService : Service() {
                 }
                 newChatMessagesNotification(newMessages)
             }
-        lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
+            lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
@@ -230,7 +188,7 @@ class NotificationService : Service() {
                     append("${newMessage.author}: ${newMessage.text}\n")
                 }
             }
-            showNotification(
+            notificationLogic.showNotification(
                 "${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.messages_count, newMessages.size, newMessages.size)}",
                 notificationMessageText.toString(),
                 NotificationType.MESSAGE
@@ -268,73 +226,22 @@ class NotificationService : Service() {
                     append("${newTask.name}\n")
                 }
             }
-            showNotification(
+            notificationLogic.showNotification(
                 "${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newTasks.size,newTasks.size)}",
                 notificationMessageText.toString(),
                 NotificationType.TASK
             )
         } else if (newTasks.size > 0) {
-            showNotification(newTasks[0].name.toString(),
+            notificationLogic.showNotification(newTasks[0].name.toString(),
                 newTasks[0].description.toString(),
                 NotificationType.TASK)
         }
     }
 
-    private fun showNotification(title: String, message: String, type: NotificationType) {
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            1,
-            notificationIntent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-        )
-
-        val notificationBuilder =  NotificationCompat.Builder(this, type.channelId)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-
-        val notification = notificationBuilder.build()
-
-        // Android 13 (API level 33) and higher requires a permission
-        notifyAndCheckPermission(notification)
-    }
-
-    private fun notifyAndCheckPermission(notification: Notification) {
-        if (checkPermission()) {
-            notificationManager.notify(
-                NOTIFICATION_ID + 1,
-                notification
-            )
-            NOTIFICATION_ID += 1
-        }
-    }
-
-    private fun checkPermission(): Boolean {
-        // Is true when
-        // * Current API level is higher than 33 (Android 13) and permission granted
-        // * Or the Android version is lower and there's no need in permissions
-        return ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-                || (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU)
-    }
-
     companion object {
         private var CHECK_INTERVAL: Long = 3*60*1000
-        private var NOTIFICATION_ID = 1
-        private lateinit var tasksChannel: NotificationChannel
-        private lateinit var messagesChannel: NotificationChannel
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
         private var lastChatsCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }
 
-enum class NotificationType(val channelId: String, val soundKey: String) {
-    DEFAULT("ru.runa.wfe.notifications", ""),
-    TASK("ru.runa.wfe.notifications.tasks", "tasksSound"),
-    MESSAGE("ru.runa.wfe.notifications.messages", "messagesSound")
-}
