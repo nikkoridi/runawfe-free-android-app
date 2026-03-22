@@ -15,7 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
-import ru.runa.wfe.PreferencesManager
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.notification.NotificationType
 import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat

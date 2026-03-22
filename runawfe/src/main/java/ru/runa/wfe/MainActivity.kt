@@ -21,7 +21,9 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.savedstate.SavedState
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationService
+import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
@@ -76,7 +78,7 @@ class MainActivity : AppCompatActivity() {
                     NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build())
             } else {
                 ApiClient.setServerUrl(wfURL)
-                val tokenLoadSuccess = ApiClient.tokenManager.loadToken(preferencesManager)
+                val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
                 preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                 if (tokenLoadSuccess) {
                     navController.popBackStack() // Don't return to login form by pressing back
@@ -91,8 +93,8 @@ class MainActivity : AppCompatActivity() {
     private fun startNotificationService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED) {
-            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+               requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
         else {
             startForegroundService(Intent(this, NotificationService::class.java))

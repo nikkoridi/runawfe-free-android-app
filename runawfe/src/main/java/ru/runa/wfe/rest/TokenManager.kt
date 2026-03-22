@@ -2,9 +2,9 @@ package ru.runa.wfe.rest
 
 import android.util.Log
 import com.google.gson.JsonParser
-import ru.runa.wfe.PreferencesManager
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
-import ru.runa.wfe.rest.dto.WfeCredentials
+import ru.runa.wfe.restapi.model.WfeCredentials
 import ru.runa.wfe.ui.login.LoginResult
 import java.time.Instant
 
@@ -67,7 +67,7 @@ object TokenManager {
 
     suspend fun requestToken(credentials: WfeCredentials): LoginResult {
         return try {
-            val response = ApiClient.authService.basic(credentials)
+            val response = ApiClient.authService.basicUsingPOST(credentials)
             if (response.isSuccessful) {
                 val token = response.body().toString()
                 if (checkToken(token)) {
@@ -91,9 +91,6 @@ object TokenManager {
         } catch (exception: Exception) {
             Log.e("TokenManager", "Unknown error: ${exception.localizedMessage}")
             LoginResult(false, R.string.undefined_error)
-        } finally {
-            credentials.login = ""
-            credentials.password = ""
         }
     }
 }

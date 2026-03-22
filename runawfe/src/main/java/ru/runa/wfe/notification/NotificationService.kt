@@ -19,7 +19,6 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.paging.PagingData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.android.asCoroutineDispatcher
@@ -28,15 +27,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
-import ru.runa.wfe.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
-import ru.runa.wfe.rest.dto.WfChatRoom
-import ru.runa.wfe.rest.dto.WfeChatMessage
-import ru.runa.wfe.rest.dto.WfePagedList
-import ru.runa.wfe.rest.dto.WfeTask
+import ru.runa.wfe.restapi.model.MessageAddedBroadcast
+import ru.runa.wfe.restapi.model.WfChatRoom
+import ru.runa.wfe.restapi.model.WfePagedListFilter
+import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
+import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.PermissionsConstants
-import java.util.Date
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 class NotificationService : Service() {
     private val notificationManager by lazy {
@@ -82,10 +84,12 @@ class NotificationService : Service() {
             sendBroadcast(permissionRequestIntent)
             return START_NOT_STICKY
         }
-        val lastCheck = preferencesManager
-            .getValue(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
-        lastTasksCheck = Date(lastCheck)
-        lastChatsCheck = Date(lastCheck)
+        val lastCheck = OffsetDateTime.parse(
+            preferencesManager
+            .getValue(PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).toString()))
+            .withOffsetSameLocal(ZoneOffset.UTC)
+        lastTasksCheck = lastCheck
+        lastChatsCheck = lastCheck
 
         setNotifications()
         return START_STICKY
@@ -111,7 +115,9 @@ class NotificationService : Service() {
 
     private fun saveLastCheckData() {
         CoroutineScope(Dispatchers.IO).launch {
-            preferencesManager.setKey(PreferencesManager.LAST_CHECK, System.currentTimeMillis())
+            preferencesManager.setKey(
+                PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).format(
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         }
     }
 
@@ -181,34 +187,41 @@ class NotificationService : Service() {
     }
 
     private suspend fun checkNewChatMessages() {
-        val chatRooms: Collection<WfChatRoom>? = ApiClient.chatService.getChatRooms().body()
-        if (chatRooms != null) {
-            val newMessages = ArrayList<WfeChatMessage>()
-            for (room in chatRooms) {
-                if (room.newMessagesCount > 0) {
-                    val processId = room.getId()
-                    val chatRoomMessages = ApiClient.chatService.getChatMessages(processId).body()
-                    if (chatRoomMessages != null) {
-                        val chat: Iterator<WfeChatMessage> = chatRoomMessages.iterator()
-                        var readAllNew = false
-                        while (!readAllNew && chat.hasNext()) {
-                            val message = chat.next()
-                            if (message.createDate.compareTo(lastChatsCheck) >= 0) {
-                                newMessages.add(message)
-                            }
-                            else {
-                                readAllNew = true
+        try {
+            val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
+            if (chatRooms != null) {
+                val newMessages = ArrayList<MessageAddedBroadcast>()
+                for (room in chatRooms) {
+                    if ((room.newMessagesCount ?: 0) > 0) {
+                        val chatRoomMessages =
+                            room.id?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
+                        if (chatRoomMessages != null) {
+                            val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
+                            var readAllNew = false
+                            while (!readAllNew && chat.hasNext()) {
+                                val message = chat.next()
+                                // New variable because smartcast won't work with custom getter
+                                val createDate = message.createDate
+                                if (createDate != null
+                                    && lastChatsCheck.isBefore(createDate)) {
+                                    newMessages.add(message)
+                                }
+                                else {
+                                    readAllNew = true
+                                }
                             }
                         }
                     }
                 }
+                newChatMessagesNotification(newMessages)
             }
-            newChatMessagesNotification(newMessages)
+        lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
+        } catch (ex: Exception) {
+            Log.e(this::class.simpleName, ex.message.toString())
         }
-        lastChatsCheck = Date()
     }
 
-    private fun newChatMessagesNotification(newMessages: ArrayList<WfeChatMessage>) {
+    private fun newChatMessagesNotification(newMessages: ArrayList<MessageAddedBroadcast>) {
         if (newMessages.size > 1) {
             val notificationMessageText = StringBuilder().apply {
                 for (newMessage in newMessages) {
@@ -225,20 +238,25 @@ class NotificationService : Service() {
 
     private suspend fun checkNewTasks() {
         val newTasks = ArrayList<WfeTask>()
-        val tasks: WfePagedList<WfeTask>? = ApiClient.taskService.getMyTasks(
-            PagingData.from(
-                newTasks
-            )
-        ).body()
-        if (tasks != null && tasks.data.isNotEmpty()) {
-            for (task in tasks.data) {
-                if (task.assignDate.compareTo(lastTasksCheck) >= 0) {
-                    newTasks.add(task)
+        try {
+            val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(
+                WfePagedListFilter()
+            ).body()
+            if (tasks?.data != null) {
+                for (task in tasks.data) {
+                    // New variable because smartcast won't work with custom getter
+                    val assignDate = task.assignDate
+                    if (assignDate != null &&
+                        lastTasksCheck.isBefore(assignDate)) {
+                        newTasks.add(task)
+                    }
                 }
+                newMessagesNotification(newTasks)
+                lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             }
-            newMessagesNotification(newTasks)
+        } catch (ex: Exception) {
+            Log.e(this::class.simpleName, ex.message.toString())
         }
-        lastTasksCheck = Date()
     }
 
     private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
@@ -254,7 +272,9 @@ class NotificationService : Service() {
                 NotificationType.TASK
             )
         } else if (newTasks.size > 0) {
-            showNotification(newTasks[0].name, newTasks[0].description,  NotificationType.TASK)
+            showNotification(newTasks[0].name.toString(),
+                newTasks[0].description.toString(),
+                NotificationType.TASK)
         }
     }
 
@@ -306,8 +326,8 @@ class NotificationService : Service() {
         private var NOTIFICATION_ID = 1
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
-        private var lastTasksCheck: Date = Date()
-        private var lastChatsCheck: Date = Date()
+        private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
+        private var lastChatsCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }
 

@@ -1,4 +1,4 @@
-package ru.runa.wfe
+package ru.runa.wfe.data
 
 import android.content.Context
 import androidx.datastore.core.IOException
@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-import ru.runa.wfe.rest.KeyStoreManager
 
 private const val PREFERENCES_NAME = "app_preferences"
 
@@ -88,7 +86,7 @@ class PreferencesManager(private val context: Context) {
         val SHOW_URL = booleanPreferencesKey("showUrl")
         val CHECK_DELAY = intPreferencesKey("checkDelay")
         val IS_LOGGED = booleanPreferencesKey("isLogged")
-        val LAST_CHECK = longPreferencesKey("lastCheck")
+        val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")
     }
 }

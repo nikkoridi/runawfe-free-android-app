@@ -30,7 +30,7 @@ import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
-import ru.runa.wfe.PreferencesManager
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import kotlin.math.abs
 
