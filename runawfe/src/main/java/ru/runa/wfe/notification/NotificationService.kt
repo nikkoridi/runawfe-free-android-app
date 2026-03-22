@@ -30,6 +30,7 @@ import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
+import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListFilter
 import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
@@ -185,34 +186,38 @@ class NotificationService : Service() {
     }
 
     private suspend fun checkNewChatMessages() {
-        val chatRooms: List<ru.runa.wfe.restapi.model.WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
-        if (chatRooms != null) {
-            val newMessages = ArrayList<MessageAddedBroadcast>()
-            for (room in chatRooms) {
-                if ((room.newMessagesCount ?: 0) > 0) {
-                    val chatRoomMessages =
-                        room.id?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
-                    if (chatRoomMessages != null) {
-                        val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
-                        var readAllNew = false
-                        while (!readAllNew && chat.hasNext()) {
-                            val message = chat.next()
-                            // New variable because smartcast won't work with custom getter
-                            val createDate = message.createDate
-                            if (createDate != null
-                                && lastChatsCheck.isBefore(createDate)) {
-                                newMessages.add(message)
-                            }
-                            else {
-                                readAllNew = true
+        try {
+        val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
+            if (chatRooms != null) {
+                val newMessages = ArrayList<MessageAddedBroadcast>()
+                for (room in chatRooms) {
+                    if ((room.newMessagesCount ?: 0) > 0) {
+                        val chatRoomMessages =
+                            room.id?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
+                        if (chatRoomMessages != null) {
+                            val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
+                            var readAllNew = false
+                            while (!readAllNew && chat.hasNext()) {
+                                val message = chat.next()
+                                // New variable because smartcast won't work with custom getter
+                                val createDate = message.createDate
+                                if (createDate != null
+                                    && lastChatsCheck.isBefore(createDate)) {
+                                    newMessages.add(message)
+                                }
+                                else {
+                                    readAllNew = true
+                                }
                             }
                         }
                     }
                 }
+                newChatMessagesNotification(newMessages)
             }
-            newChatMessagesNotification(newMessages)
-        }
         lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
+        } catch (ex: Exception) {
+            Log.e(this::class.simpleName, ex.message.toString())
+        }
     }
 
     private fun newChatMessagesNotification(newMessages: ArrayList<MessageAddedBroadcast>) {
@@ -232,19 +237,25 @@ class NotificationService : Service() {
 
     private suspend fun checkNewTasks() {
         val newTasks = ArrayList<WfeTask>()
-        val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(WfePagedListFilter()).body()
-        if (tasks?.data != null) {
-            for (task in tasks.data) {
-                // New variable because smartcast won't work with custom getter
-                val assignDate = task.assignDate
-                if (assignDate != null &&
-                    lastTasksCheck.isBefore(assignDate)) {
-                    newTasks.add(task)
+        try {
+            val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(
+                WfePagedListFilter()
+            ).body()
+            if (tasks?.data != null) {
+                for (task in tasks.data) {
+                    // New variable because smartcast won't work with custom getter
+                    val assignDate = task.assignDate
+                    if (assignDate != null &&
+                        lastTasksCheck.isBefore(assignDate)) {
+                        newTasks.add(task)
+                    }
                 }
+                newMessagesNotification(newTasks)
+                lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             }
-            newMessagesNotification(newTasks)
+        } catch (ex: Exception) {
+            Log.e(this::class.simpleName, ex.message.toString())
         }
-        lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
     }
 
     private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
