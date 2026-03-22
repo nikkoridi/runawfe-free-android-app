@@ -100,7 +100,9 @@ class NotificationService : Service() {
             notificationServiceScope.cancel()
         }
         saveLastCheckData()
-        thread.quitSafely()
+        if (this::thread.isInitialized) {
+            thread.quitSafely()
+        }
         unregisterReceiver(permissionReceiver)
         super.onDestroy()
     }
