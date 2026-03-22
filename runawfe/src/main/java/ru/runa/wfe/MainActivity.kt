@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationService
 import ru.runa.wfe.rest.TokenManager
+import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0)
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
-                as NavHostFragment
+        as NavHostFragment
         navController = navHostFragment.navController
         preferencesManager = PreferencesManager(this)
 
@@ -55,6 +56,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val wfURL = PreferencesManager(this)
+            .getValue(PreferencesManager.WEBVIEW_URL, "")
+        ApiClient.setServerUrl(wfURL)
         loadDataAndNavigate()
     }
 
@@ -82,8 +86,8 @@ class MainActivity : AppCompatActivity() {
     private fun startNotificationService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED) {
-            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+               requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         }
         else {
             startForegroundService(Intent(this, NotificationService::class.java))
