@@ -34,21 +34,21 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                     soundUri = result.data?.getParcelableExtra(
                         RingtoneManager.EXTRA_RINGTONE_PICKED_URI,
                         Uri::class.java)
-                }
-               else {
-                   @Suppress("DEPRECATION")
-                    soundUri = result.data?.getParcelableExtra(
-                        RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                } else {
+                    @Suppress("DEPRECATION")
+                    soundUri = result.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
                 }
                 preferenceManager.sharedPreferences?.edit {
-                    putString(lastPickedSoundKey,
-                        soundUri.toString())
+                    putString(lastPickedSoundKey, soundUri.toString())
                 }
             }
+
             else -> {
-                Toast.makeText(context,
+                Toast.makeText(
+                    context,
                     this.getString(R.string.settings_value_error_message),
-                    Toast.LENGTH_SHORT).show()
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -62,8 +62,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         preferencesManager = PreferencesManager(requireContext())
         val checkDelay: DurationPreference? = findPreference("checkDelay")
 
-        val savedCheckDelay: Int = preferencesManager.getValue(PreferencesManager.CHECK_DELAY,
-                3)
+        val savedCheckDelay: Int = preferencesManager.getValue(PreferencesManager.CHECK_DELAY, 3)
         checkDelay?.summary = checkDelaySummary(savedCheckDelay)
 
         findPreference<DurationPreference>("checkDelay")
@@ -74,10 +73,12 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                         this.getString(R.string.settings_empty_value_message),
                         Toast.LENGTH_SHORT).show()
                     false
-                }
-                else {
+                } else {
                     lifecycleScope.launch {
-                        preferencesManager.setKey(PreferencesManager.CHECK_DELAY, newCheckIntervalValue)
+                        preferencesManager.setKey(
+                            PreferencesManager.CHECK_DELAY,
+                            newCheckIntervalValue
+                        )
                     }
                     checkDelay?.let {
                         it.summary = checkDelaySummary(newCheckIntervalValue)
@@ -114,18 +115,18 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         if (key.equals("tasksSound") || key.equals("messagesSound")) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 showNotificationSettingsOreo(key)
-            }
-            else {
+            } else {
                 // To show settings screen on old versions
                 // showNotificationSettingsBelowOreo()
 
                 // Show custom ringtone picker on old versions
-                when(key) {
+                when (key) {
                     "tasksSound" -> {
                         runRingtonePicker(preference.title.toString(), key)
                         lastPickedSoundKey = key
                         return true
                     }
+
                     "messagesSound" -> {
                         runRingtonePicker(preference.title.toString(), key)
                         lastPickedSoundKey = key

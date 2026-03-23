@@ -43,8 +43,7 @@ object ApiClient {
                 if (checkServer(baseUrl)) {
                     BASE_URL = baseUrl
                     initBasicApiClient()
-                }
-                else {
+                } else {
                     Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
                 }
             } catch (ex: Exception) {
@@ -82,10 +81,10 @@ object ApiClient {
             .build()
         return withContext(Dispatchers.IO) {
             val response = OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.MILLISECONDS)
-                    .build()
-                    .newCall(versionRequest)
-                    .execute()
+                .connectTimeout(30, TimeUnit.MILLISECONDS)
+                .build()
+                .newCall(versionRequest)
+                .execute()
             !response.body?.string().isNullOrBlank()
         }
     }

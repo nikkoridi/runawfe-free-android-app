@@ -8,7 +8,7 @@ import ru.runa.wfe.R
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.restapi.model.WfeCredentials
 
-data class LoginResult (
+data class LoginResult(
     val success: Boolean = false,
     val error: Int? = null
 )
@@ -20,8 +20,7 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             if (loginValidator(login) && passwordValidator(password)) {
                 _loginForm.value = TokenManager.requestToken(WfeCredentials(login, password))
-            }
-            else {
+            } else {
                 _loginForm.value = LoginResult(false, R.string.empty_form)
             }
             onComplete(_loginForm.value)

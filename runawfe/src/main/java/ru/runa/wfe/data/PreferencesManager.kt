@@ -24,27 +24,27 @@ val Context.dataStore by preferencesDataStore(name = PREFERENCES_NAME)
 class PreferencesManager(private val context: Context) {
     private val gson: Gson = GsonBuilder().create()
 
-    suspend fun<T> setKey(key: Preferences.Key<T>, value: T) {
+    suspend fun <T> setKey(key: Preferences.Key<T>, value: T) {
         context.dataStore.edit {
             it[key] = value
         }
     }
 
-    suspend fun<T> hasKey(key: Preferences.Key<T>) = context.dataStore.edit { it.contains(key) }
+    suspend fun <T> hasKey(key: Preferences.Key<T>) = context.dataStore.edit { it.contains(key) }
 
-    fun<T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
+    fun <T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
         return context.dataStore.data.catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
             } else {
-                throw  exception
+                throw exception
             }
         }.map {
             it[key] ?: defaultValue
         }
     }
 
-    fun<T> getValue(key: Preferences.Key<T>, defaultValue: T): T {
+    fun <T> getValue(key: Preferences.Key<T>, defaultValue: T): T {
         var value: T
         runBlocking {
             value = context.dataStore.data.first()[key] ?: defaultValue
@@ -53,7 +53,7 @@ class PreferencesManager(private val context: Context) {
     }
 
     @Throws(Exception::class)
-    suspend fun<T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {
+    suspend fun <T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {
         val encryptedValue = context.dataStore.data.first()[key]
         if (encryptedValue != null) {
             return gson.fromJson(KeyStoreManager.decrypt(encryptedValue.toString()), type)
@@ -68,7 +68,7 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
-    suspend fun<T> deleteKeyValue(key: Preferences.Key<T>) {
+    suspend fun <T> deleteKeyValue(key: Preferences.Key<T>) {
         context.dataStore.edit {
             it.remove(key)
         }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.notification.NotificationLogic.NotificationType
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfChatRoom
@@ -31,7 +32,6 @@ import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import ru.runa.wfe.notification.NotificationLogic.NotificationType
 
 class NotificationService : Service() {
     private lateinit var notificationLogic: NotificationLogic
@@ -43,7 +43,8 @@ class NotificationService : Service() {
         override fun onReceive(context: Context, intent: Intent) {
             val permissionGranted = intent.getBooleanExtra(
                 "permission_granted",
-                false)
+                false
+            )
             if (permissionGranted) setNotifications()
         }
     }
@@ -52,33 +53,39 @@ class NotificationService : Service() {
         super.onCreate()
         preferencesManager = PreferencesManager(this)
         notificationLogic = NotificationLogic(this)
-        registerReceiver(permissionReceiver,
+        registerReceiver(
+            permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
-            Context.RECEIVER_NOT_EXPORTED)
+            Context.RECEIVER_NOT_EXPORTED
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val minutesCheckInterval: Int = CHECK_INTERVAL.toInt() / (1000 * 60)
         val checkDelay: Int = preferencesManager.getValue(
-            PreferencesManager.CHECK_DELAY, minutesCheckInterval)
+            PreferencesManager.CHECK_DELAY, minutesCheckInterval
+        )
         if (checkDelay != minutesCheckInterval) {
             CHECK_INTERVAL = (checkDelay * 1000 * 60).toLong()
         }
 
         if (!notificationLogic.checkPermission() || checkDelay == 0) {
             stopSelf()
-            Log.e("NotificationsManager", "No required permission: "
-                    + Manifest.permission.POST_NOTIFICATIONS)
+            Log.e(
+                "NotificationsManager", "No required permission: "
+                        + Manifest.permission.POST_NOTIFICATIONS
+            )
             val permissionRequestIntent =
                 Intent(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName).apply {
-                putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
-            }
+                    putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
+                }
             sendBroadcast(permissionRequestIntent)
             return START_NOT_STICKY
         }
         val lastCheck = OffsetDateTime.parse(
-            preferencesManager
-            .getValue(PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).toString()))
+            preferencesManager.getValue(PreferencesManager.LAST_CHECK,
+                    OffsetDateTime.now(ZoneOffset.UTC).toString())
+        )
             .withOffsetSameLocal(ZoneOffset.UTC)
         lastTasksCheck = lastCheck
         lastChatsCheck = lastCheck
@@ -88,7 +95,7 @@ class NotificationService : Service() {
     }
 
     override fun onDestroy() {
-        if (::notificationServiceScope.isInitialized) {
+        if (this::notificationServiceScope.isInitialized) {
             notificationServiceScope.cancel()
         }
         saveLastCheckData()
@@ -122,16 +129,20 @@ class NotificationService : Service() {
         notificationServiceScope = CoroutineScope(handler.asCoroutineDispatcher())
 
         // Notify about service start
-        val serviceStartNotification = NotificationCompat.Builder(this,
-            NotificationType.DEFAULT.channelId)
+        val serviceStartNotification = NotificationCompat.Builder(
+            this,
+            NotificationType.DEFAULT.channelId
+        )
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = notificationLogic.getOrCreateChannel(1,
+        val serviceChannel = notificationLogic.getOrCreateChannel(
+            1,
             NotificationType.DEFAULT,
             this.getString(R.string.notifications_settings),
-            this.getString(R.string.notifications_service_message))
+            this.getString(R.string.notifications_service_message)
+        )
         NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
         startForeground(1, serviceStartNotification)
 
@@ -154,7 +165,9 @@ class NotificationService : Service() {
                 for (room in chatRooms) {
                     if ((room.newMessagesCount ?: 0) > 0) {
                         val chatRoomMessages =
-                            room.id?.let { ApiClient.chatService.getChatMessagesUsingGET(it).body() }
+                            room.id?.let {
+                                ApiClient.chatService.getChatMessagesUsingGET(it).body()
+                            }
                         if (chatRoomMessages != null) {
                             val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
                             var readAllNew = false
@@ -163,10 +176,10 @@ class NotificationService : Service() {
                                 // New variable because smartcast won't work with custom getter
                                 val createDate = message.createDate
                                 if (createDate != null
-                                    && lastChatsCheck.isBefore(createDate)) {
+                                    && lastChatsCheck.isBefore(createDate)
+                                ) {
                                     newMessages.add(message)
-                                }
-                                else {
+                                } else {
                                     readAllNew = true
                                 }
                             }
@@ -189,7 +202,13 @@ class NotificationService : Service() {
                 }
             }
             notificationLogic.showNotification(
-                "${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.messages_count, newMessages.size, newMessages.size)}",
+                "${this.getString(R.string.new_data_notifications)} ${
+                    resources.getQuantityString(
+                        R.plurals.messages_count,
+                        newMessages.size,
+                        newMessages.size
+                    )
+                }",
                 notificationMessageText.toString(),
                 NotificationType.MESSAGE
             )
@@ -207,7 +226,8 @@ class NotificationService : Service() {
                     // New variable because smartcast won't work with custom getter
                     val assignDate = task.assignDate
                     if (assignDate != null &&
-                        lastTasksCheck.isBefore(assignDate)) {
+                        lastTasksCheck.isBefore(assignDate)
+                    ) {
                         newTasks.add(task)
                     }
                 }
@@ -227,19 +247,27 @@ class NotificationService : Service() {
                 }
             }
             notificationLogic.showNotification(
-                "${this.getString(R.string.new_data_notifications)} ${resources.getQuantityString(R.plurals.tasks_count, newTasks.size,newTasks.size)}",
+                "${this.getString(R.string.new_data_notifications)} ${
+                    resources.getQuantityString(
+                        R.plurals.tasks_count,
+                        newTasks.size,
+                        newTasks.size
+                    )
+                }",
                 notificationMessageText.toString(),
                 NotificationType.TASK
             )
         } else if (newTasks.size > 0) {
-            notificationLogic.showNotification(newTasks[0].name.toString(),
+            notificationLogic.showNotification(
+                newTasks[0].name.toString(),
                 newTasks[0].description.toString(),
-                NotificationType.TASK)
+                NotificationType.TASK
+            )
         }
     }
 
     companion object {
-        private var CHECK_INTERVAL: Long = 3*60*1000
+        private var CHECK_INTERVAL: Long = 3 * 60 * 1000
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
         private var lastChatsCheck: OffsetDateTime = OffsetDateTime.now()
     }

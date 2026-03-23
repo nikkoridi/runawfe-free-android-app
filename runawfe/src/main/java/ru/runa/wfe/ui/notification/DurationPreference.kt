@@ -6,8 +6,10 @@ import android.util.AttributeSet
 import androidx.preference.DialogPreference
 import ru.runa.wfe.R
 
-class DurationPreference(context: Context,
-                         attrs: AttributeSet?) : DialogPreference(context, attrs) {
+class DurationPreference(
+    context: Context,
+    attrs: AttributeSet?
+) : DialogPreference(context, attrs) {
     var duration: Int = DEFAULT
         get() = field
         set(value) {

@@ -16,7 +16,8 @@ class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() 
     override fun onBindDialogView(view: View) {
         super.onBindDialogView(view)
 
-        timePicker = view.findViewById(R.id.durationPicker) ?: error("Can't find TimePicker in dialog with id ''")
+        timePicker = view.findViewById(R.id.durationPicker)
+            ?: error("Can't find TimePicker in dialog with id ''")
         val savedDurationMinutes = preference.duration
         val hours = savedDurationMinutes / 60
         val minutes = savedDurationMinutes % 60
@@ -35,16 +36,17 @@ class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() 
                     duration = inputDurationMinutes
                 }
             }
-        }
-        else {
-            Toast.makeText(context,
+        } else {
+            Toast.makeText(
+                context,
                 this.getString(R.string.settings_empty_value_message),
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
     companion object {
-    fun newInstance(key: String?) = DurationPreferenceDialogFragmentCompat().apply {
+        fun newInstance(key: String?) = DurationPreferenceDialogFragmentCompat().apply {
             arguments = Bundle(1).apply {
                 putString(ARG_KEY, key)
             }

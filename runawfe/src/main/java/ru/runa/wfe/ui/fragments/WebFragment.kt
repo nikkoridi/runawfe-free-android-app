@@ -55,7 +55,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
         lifecycleScope.launch {
-            preferencesManager.setKey(PreferencesManager.IS_LOGGED, false) // Ask login every app start
+            preferencesManager.setKey(
+                PreferencesManager.IS_LOGGED,
+                false
+            ) // Ask login every app start
         }
         val lastVersion = preferencesManager
             .getValue(PreferencesManager.LAST_VERSION, "").toString()
@@ -77,18 +80,26 @@ class WebFragment : Fragment(R.layout.web_fragment) {
 
         webView.webViewClient = object : WebViewClient() {
             @SuppressLint("WebViewClientOnReceivedSslError", "ObsoleteSdkInt")
-            override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
+            override fun onReceivedSslError(
+                view: WebView,
+                handler: SslErrorHandler,
+                error: SslError
+            ) {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1) {
                     handler.proceed()
                 } else {
                     handler.cancel()
                 }
             }
+
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 urlField.text = webView.url
                 lifecycleScope.launch {
-                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, webView.url.toString())
+                    preferencesManager.setKey(
+                        PreferencesManager.WEBVIEW_URL,
+                        webView.url.toString()
+                    )
                 }
                 if (webView.url.isNullOrBlank() || webView.url == "about:blank") {
                     val emptyURLDialogFragment = EmptyURLDialogFragment()

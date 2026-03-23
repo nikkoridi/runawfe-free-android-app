@@ -31,7 +31,8 @@ object KeyStoreManager {
         )
         val parameterSpec: KeyGenParameterSpec = KeyGenParameterSpec.Builder(
             ALIAS,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setRandomizedEncryptionRequired(true)
@@ -56,19 +57,21 @@ object KeyStoreManager {
         val ciphertext = cipher.doFinal(data.toByteArray(charset))
         return android.util.Base64.encodeToString(
             iv + ciphertext,
-            android.util.Base64.NO_WRAP)
+            android.util.Base64.NO_WRAP
+        )
     }
 
     fun decrypt(data: String): String {
         val base64Decoded = android.util.Base64.decode(data, android.util.Base64.NO_WRAP)
-        val iv = base64Decoded.take( IV_SIZE).toByteArray()
+        val iv = base64Decoded.take(IV_SIZE).toByteArray()
         val textWithTag = base64Decoded.drop(IV_SIZE).toByteArray()
         val cipher = Cipher.getInstance(TRANSFORMATION)
         if (iv.size != IV_SIZE) {
-            Log.e(this.javaClass.simpleName,
-                "Decrypt error: iv size should be $IV_SIZE, got ${iv.size}")
-        }
-        else {
+            Log.e(
+                this.javaClass.simpleName,
+                "Decrypt error: iv size should be $IV_SIZE, got ${iv.size}"
+            )
+        } else {
             cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_SIZE * 8, iv))
             return cipher.doFinal(textWithTag).toString(charset)
         }

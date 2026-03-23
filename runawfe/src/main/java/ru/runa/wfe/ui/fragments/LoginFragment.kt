@@ -59,7 +59,8 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     private fun loginHandler(
         login: EditText,
         password: EditText,
-        error: TextView) {
+        error: TextView
+    ) {
         if (preferencesManager
                 .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()
         ) {

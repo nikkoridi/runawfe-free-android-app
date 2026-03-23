@@ -73,12 +73,10 @@ object TokenManager {
                 if (checkToken(token)) {
                     this.token = token
                     return LoginResult(true)
-                }
-                else {
+                } else {
                     return LoginResult(false, R.string.token_error)
                 }
-            }
-            else {
+            } else {
                 when (response.code()) {
                     401 -> LoginResult(false, R.string.auth_error)
                     404 -> LoginResult(false, R.string.not_found_login)

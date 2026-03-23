@@ -22,25 +22,31 @@ class NotificationLogic(val context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val importance = NotificationManager.IMPORTANCE_DEFAULT
 
-            tasksChannel = getOrCreateChannel(importance,
+            tasksChannel = getOrCreateChannel(
+                importance,
                 NotificationType.TASK,
                 context.getString(R.string.tasks_channel_title),
-                context.getString(R.string.tasks_channel_description))
+                context.getString(R.string.tasks_channel_description)
+            )
 
-            messagesChannel = getOrCreateChannel(importance,
+            messagesChannel = getOrCreateChannel(
+                importance,
                 NotificationType.MESSAGE,
                 context.getString(R.string.messages_channel_title),
-                context.getString(R.string.messages_channel_description))
+                context.getString(R.string.messages_channel_description)
+            )
 
             notificationManager.createNotificationChannel(tasksChannel)
             notificationManager.createNotificationChannel(messagesChannel)
         }
     }
 
-    fun getOrCreateChannel(importance: Int,
-                                   type: NotificationType,
-                                   title: String,
-                                   channelDescription: String): NotificationChannel {
+    fun getOrCreateChannel(
+        importance: Int,
+        type: NotificationType,
+        title: String,
+        channelDescription: String
+    ): NotificationChannel {
         val channel = notificationManager.getNotificationChannel(type.channelId)
             ?: return NotificationChannel(
                 type.channelId,
@@ -61,7 +67,7 @@ class NotificationLogic(val context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         )
 
-        val notificationBuilder =  NotificationCompat.Builder(context, type.channelId)
+        val notificationBuilder = NotificationCompat.Builder(context, type.channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setContentTitle(title)
@@ -91,7 +97,8 @@ class NotificationLogic(val context: Context) {
         // * Or the Android version is lower and there's no need in permissions
         return ActivityCompat.checkSelfPermission(
             context,
-            Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
                 || (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU)
     }
 

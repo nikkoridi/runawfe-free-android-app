@@ -41,9 +41,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        registerReceiver(permissionReceiver,
+        registerReceiver(
+            permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Context.RECEIVER_NOT_EXPORTED else 0
+        )
 
         preferencesManager = PreferencesManager(this)
 
@@ -51,7 +53,7 @@ class MainActivity : AppCompatActivity() {
                 as NavHostFragment
         navController = navHostFragment.navController
         navController.addOnDestinationChangedListener(
-            object: NavController.OnDestinationChangedListener {
+            object : NavController.OnDestinationChangedListener {
                 override fun onDestinationChanged(
                     controller: NavController,
                     destination: NavDestination,
@@ -73,9 +75,11 @@ class MainActivity : AppCompatActivity() {
                 .getValue(PreferencesManager.WEBVIEW_URL, "")
 
             if (wfURL.isEmpty()) {
-                navController.navigate(R.id.settingsFragment,
+                navController.navigate(
+                    R.id.settingsFragment,
                     null,
-                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build())
+                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                )
             } else {
                 ApiClient.setServerUrl(wfURL)
                 val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
@@ -93,10 +97,10 @@ class MainActivity : AppCompatActivity() {
     private fun startNotificationService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-               requestPermission(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        else {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermission(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
             startForegroundService(Intent(this, NotificationService::class.java))
         }
     }
@@ -109,14 +113,17 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.permission_request_title)
                 .setMessage(R.string.permission_notification_need)
                 .setPositiveButton(R.string.permission_set) { _, _ ->
-                    ActivityCompat.requestPermissions(this, arrayOf(permission),
-                        REQUEST_CODE_PERMISSION)
+                    ActivityCompat.requestPermissions(
+                        this, arrayOf(permission),
+                        REQUEST_CODE_PERMISSION
+                    )
                 }
                 .create().show()
-        }
-        else {
-            ActivityCompat.requestPermissions(this, arrayOf(permission),
-                REQUEST_CODE_PERMISSION)
+        } else {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(permission),
+                REQUEST_CODE_PERMISSION
+            )
         }
     }
 
@@ -128,13 +135,15 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSION &&
             grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this,
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(
+                this,
                 R.string.permission_given,
-                Toast.LENGTH_LONG).show()
+                Toast.LENGTH_LONG
+            ).show()
             startForegroundService(Intent(this, NotificationService::class.java))
-        }
-        else {
+        } else {
             Snackbar
                 .make(findViewById(android.R.id.content), R.string.permission_error, 40000)
                 .setAction(R.string.permission_snackbar_set) {
