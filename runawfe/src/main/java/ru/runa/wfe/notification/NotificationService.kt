@@ -98,7 +98,6 @@ class NotificationService : Service() {
         if (this::notificationServiceScope.isInitialized) {
             notificationServiceScope.cancel()
         }
-        saveLastCheckData()
         if (this::thread.isInitialized) {
             thread.quitSafely()
         }
@@ -117,8 +116,9 @@ class NotificationService : Service() {
     private fun saveLastCheckData() {
         CoroutineScope(Dispatchers.IO).launch {
             preferencesManager.setKey(
-                PreferencesManager.LAST_CHECK, OffsetDateTime.now(ZoneOffset.UTC).format(
-                DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+                PreferencesManager.LAST_CHECK,
+                OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            )
         }
     }
 
@@ -152,6 +152,7 @@ class NotificationService : Service() {
             while (isActive) {
                 checkNewChatMessages()
                 checkNewTasks()
+                saveLastCheckData()
                 delay(CHECK_INTERVAL)
             }
         }
