@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,6 +21,7 @@ import ru.runa.wfe.restapi.client.AuthControllerApi
 import ru.runa.wfe.restapi.client.ChatControllerApi
 import ru.runa.wfe.restapi.client.TaskControllerApi
 import ru.runa.wfe.restapi.infrastructure.ApiClient
+import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
@@ -34,7 +36,10 @@ object ApiClient {
         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .registerModules(JavaTimeModule())
+        .registerKotlinModule()
         .findAndRegisterModules()
+        .addMixIn(MessageAddedBroadcast::class.java, MessageAddedBroadcastMixin::class.java)
+
 
     fun setServerUrl(url: String) {
         val baseUrl = getBaseUrl(url)

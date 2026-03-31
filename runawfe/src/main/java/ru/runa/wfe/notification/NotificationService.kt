@@ -199,7 +199,7 @@ class NotificationService : Service() {
         if (newMessages.size > 1) {
             val notificationMessageText = StringBuilder().apply {
                 for (newMessage in newMessages) {
-                    append("${newMessage.author}: ${newMessage.text}\n")
+                    append("${newMessage.author?.name}: ${newMessage.text}\n")
                 }
             }
             notificationLogic.showNotification(
