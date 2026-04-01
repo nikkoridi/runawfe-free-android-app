@@ -179,33 +179,39 @@ class NotificationService : Service() {
     }
 
     private fun newChatMessagesNotification(roomId: Long?, newMessages: List<MessageAddedBroadcast>) {
-        val title = if (roomId != null) {
-            "${getString(R.string.messages_chat_id_template, roomId)}:"
-        } else {
-            this.getString(R.string.new_data_notifications)
-        }
-
-        val notificationMessageText = if (newMessages.size > 1) {
-            StringBuilder().apply {
-                for (newMessage in newMessages) {
-                    append("${newMessage.author?.name}: ${newMessage.text}\n")
-                }
+        if (newMessages.isNotEmpty()) {
+            val title: String
+            val notificationMessage: String
+            val basicTitle = if (roomId != null) {
+                "${getString(R.string.messages_chat_id_template, roomId)}:"
+            } else {
+                this.getString(R.string.new_data_notifications)
             }
-        } else {
-            newMessages[0].text.toString()
-        }
 
-        notificationLogic.showNotification(
-            "$title ${
-                resources.getQuantityString(
-                    R.plurals.messages_count,
-                    newMessages.size,
-                    newMessages.size
-                )
-            }",
-            notificationMessageText.toString(),
-            NotificationType.MESSAGE
-        )
+            if (newMessages.size > 1) {
+                title =  "$basicTitle ${
+                    resources.getQuantityString(
+                        R.plurals.messages_count,
+                        newMessages.size,
+                        newMessages.size
+                    )
+                }"
+                notificationMessage = StringBuilder().apply {
+                    for (newMessage in newMessages) {
+                        appendLine("${newMessage.author?.name}: ${newMessage.text}")
+                    }
+                }.toString()
+            } else {
+                title = basicTitle
+                notificationMessage = newMessages[0].text.toString()
+            }
+
+            notificationLogic.showNotification(
+                title,
+                notificationMessage,
+                NotificationType.MESSAGE
+            )
+        }
     }
 
     private suspend fun checkNewTasks() {
@@ -224,7 +230,7 @@ class NotificationService : Service() {
                         newTasks.add(task)
                     }
                 }
-                newMessagesNotification(newTasks)
+                newTasksNotification(newTasks)
                 lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             }
         } catch (ex: Exception) {
@@ -232,28 +238,29 @@ class NotificationService : Service() {
         }
     }
 
-    private fun newMessagesNotification(newTasks: List<WfeTask>) {
-        if (newTasks.size > 1) {
-            val notificationMessageText = StringBuilder().apply {
-                for (newTask in newTasks) {
-                    append("${newTask.name}\n")
-                }
+    private fun newTasksNotification(newTasks: List<WfeTask>) {
+        if (newTasks.isNotEmpty()) {
+            val title = "${this.getString(R.string.new_data_notifications)} ${
+                resources.getQuantityString(
+                    R.plurals.tasks_count,
+                    newTasks.size,
+                    newTasks.size
+                )
+            }"
+
+            val notificationMessage: String = if (newTasks.size > 1) {
+                StringBuilder().apply {
+                    for (newTask in newTasks) {
+                        appendLine("${newTask.name}")
+                    }
+                }.toString()
+            } else {
+                newTasks[0].name.toString()
             }
+
             notificationLogic.showNotification(
-                "${this.getString(R.string.new_data_notifications)} ${
-                    resources.getQuantityString(
-                        R.plurals.tasks_count,
-                        newTasks.size,
-                        newTasks.size
-                    )
-                }",
-                notificationMessageText.toString(),
-                NotificationType.TASK
-            )
-        } else if (newTasks.size > 0) {
-            notificationLogic.showNotification(
-                newTasks[0].name.toString(),
-                newTasks[0].description.toString(),
+                title,
+                notificationMessage,
                 NotificationType.TASK
             )
         }
