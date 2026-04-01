@@ -88,8 +88,6 @@ class NotificationService : Service() {
         )
             .withOffsetSameLocal(ZoneOffset.UTC)
         lastTasksCheck = lastCheck
-        lastChatsCheck = lastCheck
-
         setNotifications()
         return START_STICKY
     }
@@ -162,58 +160,52 @@ class NotificationService : Service() {
         try {
             val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
             if (chatRooms != null) {
-                val newMessages = ArrayList<MessageAddedBroadcast>()
                 for (room in chatRooms) {
-                    if ((room.newMessagesCount ?: 0) > 0) {
+                    val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
+                    if (newMessagesCount > 0) {
                         val chatRoomMessages =
                             room.id?.let {
                                 ApiClient.chatService.getChatMessagesUsingGET(it).body()
                             }
-                        if (chatRoomMessages != null) {
-                            val chat: Iterator<MessageAddedBroadcast> = chatRoomMessages.iterator()
-                            var readAllNew = false
-                            while (!readAllNew && chat.hasNext()) {
-                                val message = chat.next()
-                                // New variable because smartcast won't work with custom getter
-                                val createDate = message.createDate
-                                if (createDate != null
-                                    && lastChatsCheck.isBefore(createDate)
-                                ) {
-                                    newMessages.add(message)
-                                } else {
-                                    readAllNew = true
-                                }
-                            }
+                        chatRoomMessages?.let {
+                            newChatMessagesNotification(room.id, it.subList(0, newMessagesCount))
                         }
                     }
                 }
-                newChatMessagesNotification(newMessages)
             }
-            lastChatsCheck = OffsetDateTime.now(ZoneOffset.UTC)
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
     }
 
-    private fun newChatMessagesNotification(newMessages: ArrayList<MessageAddedBroadcast>) {
-        if (newMessages.size > 1) {
-            val notificationMessageText = StringBuilder().apply {
+    private fun newChatMessagesNotification(roomId: Long?, newMessages: List<MessageAddedBroadcast>) {
+        val title = if (roomId != null) {
+            "${getString(R.string.messages_chat_id_template, roomId)}:"
+        } else {
+            this.getString(R.string.new_data_notifications)
+        }
+
+        val notificationMessageText = if (newMessages.size > 1) {
+            StringBuilder().apply {
                 for (newMessage in newMessages) {
                     append("${newMessage.author?.name}: ${newMessage.text}\n")
                 }
             }
-            notificationLogic.showNotification(
-                "${this.getString(R.string.new_data_notifications)} ${
-                    resources.getQuantityString(
-                        R.plurals.messages_count,
-                        newMessages.size,
-                        newMessages.size
-                    )
-                }",
-                notificationMessageText.toString(),
-                NotificationType.MESSAGE
-            )
+        } else {
+            newMessages[0].text.toString()
         }
+
+        notificationLogic.showNotification(
+            "$title ${
+                resources.getQuantityString(
+                    R.plurals.messages_count,
+                    newMessages.size,
+                    newMessages.size
+                )
+            }",
+            notificationMessageText.toString(),
+            NotificationType.MESSAGE
+        )
     }
 
     private suspend fun checkNewTasks() {
@@ -240,7 +232,7 @@ class NotificationService : Service() {
         }
     }
 
-    private fun newMessagesNotification(newTasks: ArrayList<WfeTask>) {
+    private fun newMessagesNotification(newTasks: List<WfeTask>) {
         if (newTasks.size > 1) {
             val notificationMessageText = StringBuilder().apply {
                 for (newTask in newTasks) {
@@ -270,7 +262,6 @@ class NotificationService : Service() {
     companion object {
         private var CHECK_INTERVAL: Long = 3 * 60 * 1000
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
-        private var lastChatsCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }
 

@@ -47,6 +47,7 @@
     <string name="new_data_notifications">Hовых:</string>
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
+    <string name="messages_chat_id_template">Чат процесса %d</string>
 
     <string name="permission_request_title">Запрос разрешения</string>
     <string name="permission_notification_need">Разрешение требуется для работы оповещений</string>
