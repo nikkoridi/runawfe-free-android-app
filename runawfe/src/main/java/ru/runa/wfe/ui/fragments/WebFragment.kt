@@ -23,6 +23,8 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -41,6 +43,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
     private lateinit var urlField: TextView
     private lateinit var topBar: LinearLayout
     private lateinit var settingsButton: ImageButton
+    private lateinit var backPressedCallback: OnBackPressedCallback
 
     @SuppressLint("SetJavaScriptEnabled")
 
@@ -171,6 +174,22 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
+        // Handle WebView back navigation
+        backPressedCallback = requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(this) {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                }
+                else {
+                    this.isEnabled = false
+                    // Callback toggle doesn't enable native behaviour in the line above
+                    // Call it directly
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        webViewHistoryBackPressedCallback(webView, backPressedCallback)
+
         val isShowUrl = preferencesManager
             .getValue(PreferencesManager.SHOW_URL, false)
         toggleUrlVisibility(isShowUrl)
@@ -197,6 +216,16 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             layoutParams.removeRule(RelativeLayout.BELOW)
             settingButtonLayoutParams.topMargin = 0
             settingsButton.layoutParams = settingButtonLayoutParams
+        }
+    }
+
+    private fun webViewHistoryBackPressedCallback(webView: WebView,
+                                                  onBackPressedCallback: OnBackPressedCallback) {
+        webView.webViewClient = object : WebViewClient() {
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                onBackPressedCallback.isEnabled = webView.canGoBack()
+            }
         }
     }
 }
