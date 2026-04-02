@@ -11,6 +11,7 @@ import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
@@ -83,11 +84,19 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             }
             isUrlChanged = ApiClient.getBaseUrl(changeUrl) != ApiClient.getBaseUrl(oldUrl)
             if (isUrlChanged) {
-                lifecycleScope.launch {
-                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
-                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                if (changeUrl.isNotEmpty()) {
+                    lifecycleScope.launch {
+                        preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    }
+                    ApiClient.setServerUrl(changeUrl)
                 }
-                ApiClient.setServerUrl(changeUrl)
+                else {
+                    // TODO: it's the third copy, will it be better as interface for Activity?
+                    val emptyURLDialogFragment = EmptyURLDialogFragment()
+                    emptyURLDialogFragment.activityOfMessage = requireActivity()
+                    emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+                }
             }
         }
     }
