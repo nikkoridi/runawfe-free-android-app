@@ -69,19 +69,6 @@ class NotificationService : Service() {
             CHECK_INTERVAL = (checkDelay * 1000 * 60).toLong()
         }
 
-        if (!notificationLogic.checkPermission() || checkDelay == 0) {
-            stopSelf()
-            Log.e(
-                "NotificationsManager", "No required permission: "
-                        + Manifest.permission.POST_NOTIFICATIONS
-            )
-            val permissionRequestIntent =
-                Intent(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName).apply {
-                    putExtra("permission", Manifest.permission.POST_NOTIFICATIONS)
-                }
-            sendBroadcast(permissionRequestIntent)
-            return START_NOT_STICKY
-        }
         val lastCheck = OffsetDateTime.parse(
             preferencesManager.getValue(PreferencesManager.LAST_CHECK,
                     OffsetDateTime.now(ZoneOffset.UTC).toString())

@@ -101,7 +101,13 @@ class MainActivity : AppCompatActivity() {
         ) {
             requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            startForegroundService(Intent(this, NotificationService::class.java))
+            val checkDelay: Int = preferencesManager.getValue(
+                PreferencesManager.CHECK_DELAY,
+                0
+            )
+            if (checkDelay != 0) {
+                startForegroundService(Intent(this, NotificationService::class.java))
+            }
         }
     }
 
