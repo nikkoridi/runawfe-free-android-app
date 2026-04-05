@@ -36,12 +36,6 @@ class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() 
                     duration = inputDurationMinutes
                 }
             }
-        } else {
-            Toast.makeText(
-                context,
-                this.getString(R.string.settings_empty_value_message),
-                Toast.LENGTH_SHORT
-            ).show()
         }
     }
 

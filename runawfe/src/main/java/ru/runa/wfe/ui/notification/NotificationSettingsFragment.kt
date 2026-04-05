@@ -60,31 +60,29 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
         preferencesManager = PreferencesManager(requireContext())
-        val checkDelay: DurationPreference? = findPreference("checkDelay")
 
-        val savedCheckDelay: Int = preferencesManager.getValue(PreferencesManager.CHECK_DELAY, 3)
-        checkDelay?.summary = checkDelaySummary(savedCheckDelay)
+        // Set custom preference and it's summary
+        val checkDelay: DurationPreference? = findPreference("checkDelay")
+        checkDelay?.summary = checkDelay?.duration?.let { checkDelaySummary(it) }
 
         findPreference<DurationPreference>("checkDelay")
             ?.setOnPreferenceChangeListener { _, newValue ->
-                val newCheckIntervalValue = newValue.toString().toIntOrNull()
-                if (newCheckIntervalValue == null) {
-                    Toast.makeText(context,
-                        this.getString(R.string.settings_empty_value_message),
-                        Toast.LENGTH_SHORT).show()
-                    false
-                } else {
-                    lifecycleScope.launch {
-                        preferencesManager.setKey(
-                            PreferencesManager.CHECK_DELAY,
-                            newCheckIntervalValue
-                        )
+                val newCheckDelayValue = newValue.toString().toIntOrNull()
+                val currentCheckDelay = preferencesManager.getValue(PreferencesManager.CHECK_DELAY, 3)
+                newCheckDelayValue?.let {
+                    if (newCheckDelayValue != currentCheckDelay) {
+                        lifecycleScope.launch {
+                            preferencesManager.setKey(
+                                PreferencesManager.CHECK_DELAY,
+                                newCheckDelayValue
+                            )
+                        }
+                        checkDelay?.let {
+                            it.summary = checkDelaySummary(newCheckDelayValue)
+                        }
                     }
-                    checkDelay?.let {
-                        it.summary = checkDelaySummary(newCheckIntervalValue)
-                    }
-                    true
                 }
+                true
             }
     }
 
