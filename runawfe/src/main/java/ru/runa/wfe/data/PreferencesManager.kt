@@ -1,7 +1,7 @@
 package ru.runa.wfe.data
 
 import android.content.Context
-import androidx.datastore.core.IOException
+import android.util.Log
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -13,6 +13,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
@@ -33,15 +34,15 @@ class PreferencesManager(private val context: Context) {
     suspend fun <T> hasKey(key: Preferences.Key<T>) = context.dataStore.edit { it.contains(key) }
 
     fun <T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
-        return context.dataStore.data.catch { exception ->
-            if (exception is IOException) {
+        return context.dataStore.data
+            .catch { exception ->
                 emit(emptyPreferences())
-            } else {
-                throw exception
+                Log.e(this::class.simpleName, exception.message.toString())
             }
-        }.map {
-            it[key] ?: defaultValue
-        }
+            .map {
+                it[key] ?: defaultValue
+            }
+            .distinctUntilChanged()
     }
 
     fun <T> getValue(key: Preferences.Key<T>, defaultValue: T): T {

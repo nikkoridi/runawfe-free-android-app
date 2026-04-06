@@ -61,12 +61,21 @@ class NotificationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val minutesCheckInterval: Int = CHECK_INTERVAL.toInt() / (1000 * 60)
-        val checkDelay: Int = preferencesManager.getValue(
-            PreferencesManager.CHECK_DELAY, minutesCheckInterval
-        )
-        if (checkDelay != minutesCheckInterval) {
-            CHECK_INTERVAL = (checkDelay * 1000 * 60).toLong()
+        // DataStore uses Dispatchers.IO, this coroutine dispatcher won't change it
+        CoroutineScope(Dispatchers.Default).launch {
+            preferencesManager.getValueFlow(
+                PreferencesManager.CHECK_DELAY,
+                CHECK_INTERVAL.toInt() / (1000 * 60)
+            ).collect { value ->
+                CHECK_INTERVAL = (value * 1000 * 60).toLong()
+                /*
+                The value is nonzero initially (checked in MainActivity)
+                stopSelf() should be called only after service start
+                */
+                if (CHECK_INTERVAL == 0L) {
+                    stopSelf()
+                }
+            }
         }
 
         val lastCheck = OffsetDateTime.parse(
