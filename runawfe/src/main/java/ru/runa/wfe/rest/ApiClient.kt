@@ -22,12 +22,14 @@ import ru.runa.wfe.restapi.client.ChatControllerApi
 import ru.runa.wfe.restapi.client.TaskControllerApi
 import ru.runa.wfe.restapi.infrastructure.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
     private var BASE_URL: String = "http://10.0.2.2:8080/"
 
-    private var basicApiClient: ApiClient = ApiClient()
+    private lateinit var basicApiClient: ApiClient
 
     private val okHttpClientBuilder = OkHttpClient.Builder()
         .callTimeout(1, TimeUnit.MINUTES)
@@ -41,18 +43,16 @@ object ApiClient {
         .addMixIn(MessageAddedBroadcast::class.java, MessageAddedBroadcastMixin::class.java)
 
 
-    fun setServerUrl(url: String) {
-        val baseUrl = getBaseUrl(url)
+    fun isApiClientInitialized(): Boolean = this::basicApiClient.isInitialized
+    
+
+    fun setServerUrl(checkedUrl: ServerCheckResult) {
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                if (checkServer(baseUrl)) {
-                    BASE_URL = baseUrl
-                    initBasicApiClient()
-                } else {
-                    Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
-                }
-            } catch (ex: Exception) {
-                Log.e(this::class.simpleName, ex.message.toString())
+            if (checkedUrl is ServerCheckResult.Valid) {
+                BASE_URL = checkedUrl.baseUrl
+                initBasicApiClient()
+            } else {
+                Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
             }
         }
     }
@@ -71,26 +71,57 @@ object ApiClient {
 
     fun getBaseUrl(url: String): String {
         try {
+            var url = url.trim()
+            if (!(url.startsWith("https://") ||
+                url.startsWith("http://"))) {
+                url = "http://$url"
+            }
             val baseUrl = Uri.parse(url)
             val port = if (baseUrl.port != -1) ":${baseUrl.port}" else ""
-            return "${baseUrl.scheme}://${baseUrl.host}$port"
+            if (baseUrl.host != null) {
+                return "${baseUrl.scheme}://${baseUrl.host}$port"
+            }
         } catch (e: Exception) {
             Log.e("API Client", "Invalid URL")
-            return ""
         }
+        return ""
     }
 
-    private suspend fun checkServer(url: String): Boolean {
+    suspend fun checkServer(url: String): ServerCheckResult = withContext(Dispatchers.IO) {
+        val clearBaseUrl = getBaseUrl(url)
+        if (clearBaseUrl.isEmpty()){
+            return@withContext ServerCheckResult.Invalid
+        }
         val versionRequest = Request.Builder()
-            .url("$url/wfe/version/")
+            .url("${clearBaseUrl}/wfe/version")
+            .get()
             .build()
-        return withContext(Dispatchers.IO) {
+        return@withContext try {
             val response = OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.MILLISECONDS)
+                .connectTimeout(3, TimeUnit.SECONDS)
                 .build()
                 .newCall(versionRequest)
                 .execute()
-            !response.body?.string().isNullOrBlank()
+            return@withContext if (!response.isSuccessful) {
+                Log.e(this::class.simpleName, "Failed server check: ${response.code}")
+                ServerCheckResult.Invalid
+            } else if (response.body?.string().isNullOrBlank()) {
+                Log.e(this::class.simpleName, "Failed server check: empty response")
+                ServerCheckResult.Invalid
+            } else {
+                ServerCheckResult.Valid(clearBaseUrl)
+            }
+        } catch (ex: Exception) {
+            when(ex) {
+                is SocketTimeoutException, is IOException -> {
+                    Log.e(this::class.simpleName, "Network exception: ${ex.message.toString()}")
+                    return@withContext ServerCheckResult.NetworkError
+                }
+                else -> {
+                    Log.e(this::class.simpleName, "Failed server check: ${ex.message.toString()}")
+                    return@withContext ServerCheckResult.Invalid
+                }
+            }
         }
     }
 
@@ -112,4 +143,11 @@ object ApiClient {
     val taskService: TaskControllerApi by lazy {
         basicApiClient.createService(TaskControllerApi::class.java)
     }
+
+}
+
+sealed class ServerCheckResult {
+    data class Valid(val baseUrl: String): ServerCheckResult()
+    data object Invalid: ServerCheckResult()
+    data object NetworkError: ServerCheckResult()
 }

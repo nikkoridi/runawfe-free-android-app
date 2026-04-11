@@ -67,6 +67,9 @@ object TokenManager {
 
     suspend fun requestToken(credentials: WfeCredentials): LoginResult {
         return try {
+            if (!ApiClient.isApiClientInitialized()) {
+                return LoginResult(false, R.string.server_url_error)
+            }
             val response = ApiClient.authService.basicUsingPOST(credentials)
             if (response.isSuccessful) {
                 val token = response.body().toString()

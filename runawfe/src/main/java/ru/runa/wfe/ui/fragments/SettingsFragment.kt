@@ -10,11 +10,13 @@ import android.widget.LinearLayout
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
 import ru.runa.wfe.rest.ApiClient
+import ru.runa.wfe.rest.ServerCheckResult
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 class SettingsFragment : Fragment(R.layout.settings_fragment) {
@@ -24,7 +26,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var changeURLView: SearchView
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
-    private var isUrlChanged: Boolean = false
+    private var isUrlHostChanged: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -78,26 +80,40 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         val changeUrl = changeURLView.query.toString()
         val oldUrl = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
-        if (changeUrl != oldUrl) {
-            lifecycleScope.launch {
-                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-            }
-            isUrlChanged = ApiClient.getBaseUrl(changeUrl) != ApiClient.getBaseUrl(oldUrl)
-            if (isUrlChanged) {
-                if (changeUrl.isNotEmpty()) {
+        if (changeUrl.isNotEmpty()) {
+            if (changeUrl != oldUrl) {
+                isUrlHostChanged = ApiClient.getBaseUrl(changeUrl) != ApiClient.getBaseUrl(oldUrl)
+                if (isUrlHostChanged) {
                     lifecycleScope.launch {
-                        preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
-                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                        val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
+                        // Don't block possibility to change url in case of bad network
+                        if (checkResult != ServerCheckResult.Invalid) {
+                            preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+                        }
+                        if (checkResult is ServerCheckResult.Valid) {
+                            ApiClient.setServerUrl(checkResult)
+                            preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                            preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                        } else {
+                            view?.let {
+                                Snackbar.make(
+                                    it,
+                                    if (checkResult is ServerCheckResult.Invalid)
+                                        R.string.invalid_url
+                                    else R.string.network_error_url,
+                                    30000
+                                )
+                                    .show()
+                            }
+                        }
                     }
-                    ApiClient.setServerUrl(changeUrl)
-                }
-                else {
-                    // TODO: it's the third copy, will it be better as interface for Activity?
-                    val emptyURLDialogFragment = EmptyURLDialogFragment()
-                    emptyURLDialogFragment.activityOfMessage = requireActivity()
-                    emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
                 }
             }
+        } else {
+            // TODO: it's the third copy, will it be better as interface for Activity?
+            val emptyURLDialogFragment = EmptyURLDialogFragment()
+            emptyURLDialogFragment.activityOfMessage = requireActivity()
+            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
         }
     }
 

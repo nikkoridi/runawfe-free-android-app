@@ -8,6 +8,8 @@
     <string name="search_hint">Введите URL</string>
     <string name="search_button">Сохранить URL</string>
     <string name="update">Обновить</string>
+    <string name="invalid_url">URL не является сервером RunaWFE или недействителен</string>
+    <string name="network_error_url">Из-за проблем с интернетом URL не был проверен</string>
 
     <string name="title_activity_login">Вход</string>
     <string name="prompt_login">Логин</string>
@@ -19,6 +21,7 @@
     <string name="invalid_session">Сессия не валидна</string>
     <string name="title_activity_notification_permission">Разрешение на показ уведомлений</string>
     <string name="token_error">Ошибка токена сервера (устарел или не может быть проверен)</string>
+    <string name="server_url_error">Ошибка адреса сервера (не был проверен)</string>
     <string name="undefined_error">Ошибка</string>
 
     <string name="notifications_service_title">Сервис уведомлений запущен</string>

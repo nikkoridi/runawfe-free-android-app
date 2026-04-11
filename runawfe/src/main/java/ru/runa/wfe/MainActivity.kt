@@ -25,6 +25,7 @@ import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationService
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.ApiClient
+import ru.runa.wfe.rest.ServerCheckResult
 import ru.runa.wfe.ui.notification.PermissionsConstants
 
 class MainActivity : AppCompatActivity() {
@@ -81,14 +82,21 @@ class MainActivity : AppCompatActivity() {
                     NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
                 )
             } else {
-                ApiClient.setServerUrl(wfURL)
-                val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
-                preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
-                if (tokenLoadSuccess) {
-                    navController.popBackStack() // Don't return to login form by pressing back
+                val checkServerUrlResult = ApiClient.checkServer(wfURL)
+                if (checkServerUrlResult is ServerCheckResult.Valid) {
+                    ApiClient.setServerUrl(checkServerUrlResult)
+                    val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
+                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
+                    if (tokenLoadSuccess) {
+                        navController.popBackStack() // Don't return to login form by pressing back
+                        navController.navigate(R.id.mainFragment)
+                    } else {
+                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    }
+                }
+                else {
+                    navController.popBackStack()
                     navController.navigate(R.id.mainFragment)
-                } else {
-                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                 }
             }
         }
@@ -105,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                 PreferencesManager.CHECK_DELAY,
                 0
             )
-            if (checkDelay != 0) {
+            if (checkDelay != 0 && ApiClient.isApiClientInitialized()) {
                 startForegroundService(Intent(this, NotificationService::class.java))
             }
         }
