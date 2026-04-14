@@ -64,15 +64,15 @@ class NotificationService : Service() {
         // DataStore uses Dispatchers.IO, this coroutine dispatcher won't change it
         CoroutineScope(Dispatchers.Default).launch {
             preferencesManager.getValueFlow(
-                PreferencesManager.CHECK_DELAY,
-                CHECK_INTERVAL.toInt() / (1000 * 60)
+                PreferencesManager.POLLING_INTERVAL,
+                pollingInterval.toInt() / (1000 * 60)
             ).collect { value ->
-                CHECK_INTERVAL = (value * 1000 * 60).toLong()
+                pollingInterval = (value * 1000 * 60).toLong()
                 /*
                 The value is nonzero initially (checked in MainActivity)
                 stopSelf() should be called only after service start
                 */
-                if (CHECK_INTERVAL == 0L) {
+                if (pollingInterval == 0L) {
                     stopSelf()
                 }
             }
@@ -147,7 +147,7 @@ class NotificationService : Service() {
                 checkNewChatMessages()
                 checkNewTasks()
                 saveLastCheckData()
-                delay(CHECK_INTERVAL)
+                delay(pollingInterval)
             }
         }
     }
@@ -266,7 +266,7 @@ class NotificationService : Service() {
     }
 
     companion object {
-        private var CHECK_INTERVAL: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
+        private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }

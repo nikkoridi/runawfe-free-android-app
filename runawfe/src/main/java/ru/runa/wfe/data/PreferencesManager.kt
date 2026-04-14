@@ -87,7 +87,7 @@ class PreferencesManager(private val context: Context) {
         val WEBVIEW_URL = stringPreferencesKey("urlQuery")
         val LAST_VERSION = stringPreferencesKey("last_version")
         val SHOW_URL = booleanPreferencesKey("showUrl")
-        val CHECK_DELAY = intPreferencesKey("checkDelay")
+        val POLLING_INTERVAL = intPreferencesKey("pollingInterval")
         val IS_LOGGED = booleanPreferencesKey("isLogged")
         val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")

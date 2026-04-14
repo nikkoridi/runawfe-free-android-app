@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             requestPermission(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             val checkDelay: Int = preferencesManager.getValue(
-                PreferencesManager.CHECK_DELAY,
+                PreferencesManager.POLLING_INTERVAL,
                 0
             )
             if (checkDelay != 0 && ApiClient.isApiClientInitialized()) {

@@ -3,7 +3,7 @@
     <PreferenceCategory app:title="@string/notifications_settings">
 
         <ru.runa.wfe.ui.notification.DurationPreference
-            app:key="checkDelay"
+            app:key="pollingInterval"
             app:title="@string/check_delay_title"
             />
 

@@ -53,7 +53,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun checkDelaySummary(number: Int): String {
+    private fun pollingIntervalSummary(number: Int): String {
         return "$number ${resources.getQuantityString(R.plurals.minutes, number)}"
     }
 
@@ -62,33 +62,30 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         preferencesManager = PreferencesManager(requireContext())
 
         // Set custom preference and it's summary
-        val checkDelay: DurationPreference? = findPreference("checkDelay")
-        checkDelay?.summary = checkDelay?.duration?.let { checkDelaySummary(it) }
+        val pollingInterval: DurationPreference? = findPreference("pollingInterval")
+        pollingInterval?.summary = pollingInterval?.duration?.let { pollingIntervalSummary(it) }
 
         lifecycleScope.launch {
-            if (!preferencesManager.hasKey(PreferencesManager.CHECK_DELAY)) {
+            if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
                 preferencesManager.setKey(
-                    PreferencesManager.CHECK_DELAY,
+                    PreferencesManager.POLLING_INTERVAL,
                     DurationPreference.DEFAULT
                 )
             }
         }
 
-        findPreference<DurationPreference>("checkDelay")
-            ?.setOnPreferenceChangeListener { _, newValue ->
-                val newCheckDelayValue = newValue.toString().toIntOrNull()
-                val currentCheckDelay = preferencesManager.getValue(PreferencesManager.CHECK_DELAY, 3)
-                newCheckDelayValue?.let {
-                    if (newCheckDelayValue != currentCheckDelay) {
+        pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
+                val newInterval = newValue.toString().toIntOrNull()
+                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, 3)
+                newInterval?.let {
+                    if (newInterval != currentPollingInterval) {
                         lifecycleScope.launch {
                             preferencesManager.setKey(
-                                PreferencesManager.CHECK_DELAY,
-                                newCheckDelayValue
+                                PreferencesManager.POLLING_INTERVAL,
+                                newInterval
                             )
                         }
-                        checkDelay?.let {
-                            it.summary = checkDelaySummary(newCheckDelayValue)
-                        }
+                        pollingInterval.summary = pollingIntervalSummary(newInterval)
                     }
                 }
                 true
