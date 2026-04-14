@@ -27,6 +27,7 @@ import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListFilter
 import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
+import ru.runa.wfe.ui.notification.DurationPreference
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -265,7 +266,7 @@ class NotificationService : Service() {
     }
 
     companion object {
-        private var CHECK_INTERVAL: Long = 3 * 60 * 1000
+        private var CHECK_INTERVAL: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }

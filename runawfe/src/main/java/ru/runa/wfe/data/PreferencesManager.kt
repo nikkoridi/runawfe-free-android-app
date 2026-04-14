@@ -31,7 +31,9 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
-    suspend fun <T> hasKey(key: Preferences.Key<T>) = context.dataStore.edit { it.contains(key) }
+    suspend fun <T> hasKey(key: Preferences.Key<T>): Boolean =
+        context.dataStore.data.first().contains(key)
+
 
     fun <T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
         return context.dataStore.data

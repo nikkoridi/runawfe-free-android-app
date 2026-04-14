@@ -65,6 +65,15 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         val checkDelay: DurationPreference? = findPreference("checkDelay")
         checkDelay?.summary = checkDelay?.duration?.let { checkDelaySummary(it) }
 
+        lifecycleScope.launch {
+            if (!preferencesManager.hasKey(PreferencesManager.CHECK_DELAY)) {
+                preferencesManager.setKey(
+                    PreferencesManager.CHECK_DELAY,
+                    DurationPreference.DEFAULT
+                )
+            }
+        }
+
         findPreference<DurationPreference>("checkDelay")
             ?.setOnPreferenceChangeListener { _, newValue ->
                 val newCheckDelayValue = newValue.toString().toIntOrNull()

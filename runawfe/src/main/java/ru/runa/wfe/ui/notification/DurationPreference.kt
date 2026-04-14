@@ -30,6 +30,6 @@ class DurationPreference(
     }
 
     companion object {
-        private const val DEFAULT = 3 // 3 min default value
+        const val DEFAULT = 3 // 3 min default value
     }
 }
