@@ -23,9 +23,9 @@ import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationLogic.NotificationType
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
+import ru.runa.wfe.restapi.model.Sorting
 import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListFilter
-import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
 import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.DurationPreference
 import ru.runa.wfe.ui.notification.PermissionsConstants
@@ -214,24 +214,19 @@ class NotificationService : Service() {
     }
 
     private suspend fun checkNewTasks() {
-        val newTasks = ArrayList<WfeTask>()
         try {
-            val tasks: WfePagedListOfWfeTask? = ApiClient.taskService.getMyTasksUsingPOST(
-                WfePagedListFilter()
-            ).body()
-            if (tasks?.data != null) {
-                for (task in tasks.data) {
-                    // New variable because smartcast won't work with custom getter
-                    val assignDate = task.assignDate
-                    if (assignDate != null &&
-                        lastTasksCheck.isBefore(assignDate)
-                    ) {
-                        newTasks.add(task)
-                    }
-                }
+            val tasksSort = Sorting("createDate", Sorting.Order.asc)
+            val tasks = ApiClient.taskService.getMyTasksUsingPOST(
+                WfePagedListFilter(sortings = listOf(tasksSort))
+            ).body()?.data as List<WfeTask>
+
+            val index = tasks.binarySearchBy(lastTasksCheck) { it.createDate }
+            val firstTaskAfterLastCheck = if (index < 0) -index else index
+            if (firstTaskAfterLastCheck <= tasks.size - 1) {
+                val newTasks = tasks.subList(firstTaskAfterLastCheck, tasks.size)
                 newTasksNotification(newTasks)
-                lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             }
+            lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
