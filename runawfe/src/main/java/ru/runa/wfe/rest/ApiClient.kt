@@ -44,7 +44,7 @@ object ApiClient {
 
 
     fun isApiClientInitialized(): Boolean = this::basicApiClient.isInitialized
-    
+
 
     fun setServerUrl(checkedUrl: ServerCheckResult) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -89,7 +89,7 @@ object ApiClient {
 
     suspend fun checkServer(url: String): ServerCheckResult = withContext(Dispatchers.IO) {
         val clearBaseUrl = getBaseUrl(url)
-        if (clearBaseUrl.isEmpty()){
+        if (clearBaseUrl.isEmpty()) {
             return@withContext ServerCheckResult.Invalid
         }
         val versionRequest = Request.Builder()
@@ -112,7 +112,7 @@ object ApiClient {
                 ServerCheckResult.Valid(clearBaseUrl)
             }
         } catch (ex: Exception) {
-            when(ex) {
+            when (ex) {
                 is SocketTimeoutException, is IOException -> {
                     Log.e(this::class.simpleName, "Network exception: ${ex.message.toString()}")
                     return@withContext ServerCheckResult.NetworkError
@@ -147,7 +147,7 @@ object ApiClient {
 }
 
 sealed class ServerCheckResult {
-    data class Valid(val baseUrl: String): ServerCheckResult()
-    data object Invalid: ServerCheckResult()
-    data object NetworkError: ServerCheckResult()
+    data class Valid(val baseUrl: String) : ServerCheckResult()
+    data object Invalid : ServerCheckResult()
+    data object NetworkError : ServerCheckResult()
 }

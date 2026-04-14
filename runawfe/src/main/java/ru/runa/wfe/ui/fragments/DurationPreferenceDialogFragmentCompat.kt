@@ -3,7 +3,6 @@ package ru.runa.wfe.ui.fragments
 import android.os.Bundle
 import android.view.View
 import android.widget.TimePicker
-import android.widget.Toast
 import androidx.preference.PreferenceDialogFragmentCompat
 import ru.runa.wfe.R
 import ru.runa.wfe.ui.notification.DurationPreference

@@ -32,8 +32,8 @@ import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.launch
 import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
-import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
@@ -61,7 +61,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             preferencesManager.setKey(
                 PreferencesManager.IS_LOGGED,
                 false
-            ) // Ask login every app start
+            )
         }
         val lastVersion = preferencesManager
             .getValue(PreferencesManager.LAST_VERSION, "").toString()
@@ -180,8 +180,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             .addCallback(this) {
                 if (webView.canGoBack()) {
                     webView.goBack()
-                }
-                else {
+                } else {
                     this.isEnabled = false
                     // Callback toggle doesn't enable native behaviour in the line above
                     // Call it directly

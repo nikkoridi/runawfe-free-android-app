@@ -1,6 +1,5 @@
 package ru.runa.wfe.notification
 
-import android.Manifest
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -174,7 +173,10 @@ class NotificationService : Service() {
         }
     }
 
-    private fun newChatMessagesNotification(roomId: Long?, newMessages: List<MessageAddedBroadcast>) {
+    private fun newChatMessagesNotification(
+        roomId: Long?,
+        newMessages: List<MessageAddedBroadcast>
+    ) {
         if (newMessages.isNotEmpty()) {
             val title: String
             val notificationMessage: String
@@ -185,7 +187,7 @@ class NotificationService : Service() {
             }
 
             if (newMessages.size > 1) {
-                title =  "$basicTitle ${
+                title = "$basicTitle ${
                     resources.getQuantityString(
                         R.plurals.messages_count,
                         newMessages.size,
