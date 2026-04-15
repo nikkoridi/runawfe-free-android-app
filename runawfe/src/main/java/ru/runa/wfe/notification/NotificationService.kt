@@ -100,18 +100,21 @@ class NotificationService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        saveLastCheckData()
+        saveLastCheckData(
+            OffsetDateTime.now(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        )
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
 
-    private fun saveLastCheckData() {
+    private fun saveLastCheckData(lastCheck: String) {
         CoroutineScope(Dispatchers.IO).launch {
             preferencesManager.setKey(
                 PreferencesManager.LAST_CHECK,
-                OffsetDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                lastCheck
             )
         }
     }
@@ -144,9 +147,10 @@ class NotificationService : Service() {
 
         notificationServiceScope.launch {
             while (isActive) {
-                checkNewChatMessages()
-                checkNewTasks()
-                saveLastCheckData()
+                val tasksJob = launch { checkNewChatMessages() }
+                val chatJob = launch { checkNewTasks() }
+                tasksJob.join()
+                chatJob.join()
                 delay(pollingInterval)
             }
         }
@@ -227,6 +231,7 @@ class NotificationService : Service() {
                 newTasksNotification(newTasks)
             }
             lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
+            saveLastCheckData(lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
