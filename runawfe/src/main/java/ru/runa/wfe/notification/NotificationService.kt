@@ -142,6 +142,7 @@ class NotificationService : Service() {
             this.getString(R.string.notifications_settings),
             this.getString(R.string.notifications_service_message)
         )
+        serviceChannel.setShowBadge(false)
         NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
         startForeground(1, serviceStartNotification)
 
