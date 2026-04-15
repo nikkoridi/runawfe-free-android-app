@@ -162,7 +162,7 @@ class NotificationService : Service() {
     private suspend fun checkNewChatMessages() {
         try {
             val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
-            if (chatRooms != null) {
+            if (!chatRooms.isNullOrEmpty()) {
                 for (room in chatRooms) {
                     val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
                     if (newMessagesCount > 0) {
@@ -223,15 +223,17 @@ class NotificationService : Service() {
     private suspend fun checkNewTasks() {
         try {
             val tasksSort = Sorting("createDate", Sorting.Order.asc)
-            val tasks = ApiClient.taskService.getMyTasksUsingPOST(
+            val tasks: List<WfeTask>? = ApiClient.taskService.getMyTasksUsingPOST(
                 WfePagedListFilter(sortings = listOf(tasksSort))
-            ).body()?.data as List<WfeTask>
+            ).body()?.data
 
-            val index = tasks.binarySearchBy(lastTasksCheck) { it.createDate }
-            val firstTaskAfterLastCheck = if (index < 0) -index else index
-            if (firstTaskAfterLastCheck <= tasks.size - 1) {
-                val newTasks = tasks.subList(firstTaskAfterLastCheck, tasks.size)
-                newTasksNotification(newTasks)
+            if (!tasks.isNullOrEmpty()) {
+                val index = tasks.binarySearchBy(lastTasksCheck) { it.createDate }
+                val firstTaskAfterLastCheck = if (index < 0) -index else index
+                if (firstTaskAfterLastCheck <= tasks.size - 1) {
+                    val newTasks = tasks.subList(firstTaskAfterLastCheck, tasks.size)
+                    newTasksNotification(newTasks)
+                }
             }
             lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             saveLastCheckData(lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
