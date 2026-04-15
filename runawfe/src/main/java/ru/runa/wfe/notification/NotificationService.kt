@@ -96,6 +96,7 @@ class NotificationService : Service() {
             thread.quitSafely()
         }
         unregisterReceiver(permissionReceiver)
+        Log.i(this.javaClass.name, "Notification service destroyed")
         super.onDestroy()
     }
 
@@ -105,6 +106,7 @@ class NotificationService : Service() {
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         )
         stopSelf()
+        Log.i(this.javaClass.name, "Notification service task removed")
         super.onTaskRemoved(rootIntent)
     }
 
