@@ -23,7 +23,6 @@ import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationLogic.NotificationType
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
-import ru.runa.wfe.restapi.model.Sorting
 import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListFilter
 import ru.runa.wfe.restapi.model.WfeTask
@@ -222,18 +221,22 @@ class NotificationService : Service() {
 
     private suspend fun checkNewTasks() {
         try {
-            val tasksSort = Sorting("createDate", Sorting.Order.asc)
             val tasks: List<WfeTask>? = ApiClient.taskService.getMyTasksUsingPOST(
-                WfePagedListFilter(sortings = listOf(tasksSort))
+                WfePagedListFilter()
             ).body()?.data
 
             if (!tasks.isNullOrEmpty()) {
-                val index = tasks.binarySearchBy(lastTasksCheck) { it.createDate }
-                val firstTaskAfterLastCheck = if (index < 0) -index else index
-                if (firstTaskAfterLastCheck <= tasks.size - 1) {
-                    val newTasks = tasks.subList(firstTaskAfterLastCheck, tasks.size)
-                    newTasksNotification(newTasks)
+                val newTasks = ArrayList<WfeTask>()
+                for (task in tasks) {
+                    // New variable because smartcast won't work with custom getter
+                    val assignDate = task.assignDate
+                    if (assignDate != null &&
+                        lastTasksCheck.isBefore(assignDate)
+                    ) {
+                        newTasks.add(task)
+                    }
                 }
+                newTasksNotification(newTasks)
             }
             lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
             saveLastCheckData(lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
