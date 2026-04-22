@@ -143,7 +143,7 @@ class NotificationService : Service() {
         )
         serviceChannel.setShowBadge(false)
         NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
-        startForeground(1, serviceStartNotification)
+        startForeground(NOTIFICATION_SERVICE_ID, serviceStartNotification)
 
         notificationLogic.createNotificationChannels()
 
@@ -274,6 +274,7 @@ class NotificationService : Service() {
     }
 
     companion object {
+        const val NOTIFICATION_SERVICE_ID = 1
         private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
         private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
     }

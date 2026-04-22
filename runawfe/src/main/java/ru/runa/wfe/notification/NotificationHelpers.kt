@@ -78,10 +78,6 @@ class NotificationLogic(val context: Context) {
         val notification = notificationBuilder.build()
 
         // Android 13 (API level 33) and higher requires a permission
-        notifyAndCheckPermission(notification)
-    }
-
-    private fun notifyAndCheckPermission(notification: Notification) {
         if (checkPermission()) {
             notificationManager.notify(
                 NOTIFICATION_ID + 1,
@@ -109,7 +105,7 @@ class NotificationLogic(val context: Context) {
     }
 
     companion object {
-        private var NOTIFICATION_ID = 1
+        private var NOTIFICATION_ID = 2
         private lateinit var tasksChannel: NotificationChannel
         private lateinit var messagesChannel: NotificationChannel
     }
