@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
-import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
@@ -22,11 +21,6 @@ import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
-import ru.runa.wfe.rest.ApiClient
-import ru.runa.wfe.restapi.model.MessageAddedBroadcast
-import ru.runa.wfe.restapi.model.WfChatRoom
-import ru.runa.wfe.restapi.model.WfePagedListFilter
-import ru.runa.wfe.restapi.model.WfeTask
 import ru.runa.wfe.ui.notification.DurationPreference
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
@@ -35,6 +29,7 @@ import java.time.format.DateTimeFormatter
 
 class NotificationService : Service() {
     private lateinit var notificationHelpers: NotificationHelpers
+    private lateinit var notificationLogic: NotificationLogic
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var thread: HandlerThread
     private lateinit var notificationServiceScope: CoroutineScope
@@ -77,13 +72,8 @@ class NotificationService : Service() {
                 }
             }
         }
-
-        val lastCheck = OffsetDateTime.parse(
-            preferencesManager.getValue(PreferencesManager.LAST_CHECK,
-                    OffsetDateTime.now(ZoneOffset.UTC).toString())
-        )
-            .withOffsetSameLocal(ZoneOffset.UTC)
-        lastTasksCheck = lastCheck
+        notificationLogic = NotificationLogic(this, notificationHelpers, preferencesManager)
+        notificationLogic.loadLastCheckData()
         setNotifications()
         return START_STICKY
     }
@@ -101,7 +91,7 @@ class NotificationService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        saveLastCheckData(
+        notificationLogic.saveLastCheckData(
             OffsetDateTime.now(ZoneOffset.UTC)
                 .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         )
@@ -111,15 +101,6 @@ class NotificationService : Service() {
     }
 
     override fun onBind(p0: Intent?): IBinder? = null
-
-    private fun saveLastCheckData(lastCheck: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            preferencesManager.setKey(
-                PreferencesManager.LAST_CHECK,
-                lastCheck
-            )
-        }
-    }
 
     private fun setNotifications() {
         thread = HandlerThread("notificationsCheck")
@@ -150,8 +131,8 @@ class NotificationService : Service() {
 
         notificationServiceScope.launch {
             while (isActive) {
-                val tasksJob = launch { checkNewChatMessages() }
-                val chatJob = launch { checkNewTasks() }
+                val tasksJob = launch { notificationLogic.checkNewChatMessagesAndNotify() }
+                val chatJob = launch { notificationLogic.checkNewTasksAndNotify() }
                 tasksJob.join()
                 chatJob.join()
                 delay(pollingInterval)
@@ -159,125 +140,8 @@ class NotificationService : Service() {
         }
     }
 
-    private suspend fun checkNewChatMessages() {
-        try {
-            val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
-            if (!chatRooms.isNullOrEmpty()) {
-                for (room in chatRooms) {
-                    val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
-                    if (newMessagesCount > 0) {
-                        val chatRoomMessages =
-                            room.id?.let {
-                                ApiClient.chatService.getChatMessagesUsingGET(it).body()
-                            }
-                        chatRoomMessages?.let {
-                            newChatMessagesNotification(room.id, it.subList(0, newMessagesCount))
-                        }
-                    }
-                }
-            }
-        } catch (ex: Exception) {
-            Log.e(this::class.simpleName, ex.message.toString())
-        }
-    }
-
-    private fun newChatMessagesNotification(
-        roomId: Long?,
-        newMessages: List<MessageAddedBroadcast>
-    ) {
-        if (newMessages.isNotEmpty()) {
-            val title: String
-            val notificationMessage: String
-            val basicTitle = if (roomId != null) {
-                "${getString(R.string.messages_chat_id_template, roomId)}:"
-            } else {
-                this.getString(R.string.new_data_notifications)
-            }
-
-            if (newMessages.size > 1) {
-                title = "$basicTitle ${
-                    resources.getQuantityString(
-                        R.plurals.messages_count,
-                        newMessages.size,
-                        newMessages.size
-                    )
-                }"
-                notificationMessage = StringBuilder().apply {
-                    for (newMessage in newMessages) {
-                        appendLine("${newMessage.author?.name}: ${newMessage.text}")
-                    }
-                }.toString()
-            } else {
-                title = basicTitle
-                notificationMessage = newMessages[0].text.toString()
-            }
-
-            notificationHelpers.showNotification(
-                title,
-                notificationMessage,
-                NotificationType.MESSAGE
-            )
-        }
-    }
-
-    private suspend fun checkNewTasks() {
-        try {
-            val tasks: List<WfeTask>? = ApiClient.taskService.getMyTasksUsingPOST(
-                WfePagedListFilter()
-            ).body()?.data
-
-            if (!tasks.isNullOrEmpty()) {
-                val newTasks = ArrayList<WfeTask>()
-                for (task in tasks) {
-                    // New variable because smartcast won't work with custom getter
-                    val assignDate = task.assignDate
-                    if (assignDate != null &&
-                        lastTasksCheck.isBefore(assignDate)
-                    ) {
-                        newTasks.add(task)
-                    }
-                }
-                newTasksNotification(newTasks)
-            }
-            lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
-            saveLastCheckData(lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
-        } catch (ex: Exception) {
-            Log.e(this::class.simpleName, ex.message.toString())
-        }
-    }
-
-    private fun newTasksNotification(newTasks: List<WfeTask>) {
-        if (newTasks.isNotEmpty()) {
-            val title = "${this.getString(R.string.new_data_notifications)} ${
-                resources.getQuantityString(
-                    R.plurals.tasks_count,
-                    newTasks.size,
-                    newTasks.size
-                )
-            }"
-
-            val notificationMessage: String = if (newTasks.size > 1) {
-                StringBuilder().apply {
-                    for (newTask in newTasks) {
-                        appendLine("${newTask.name}")
-                    }
-                }.toString()
-            } else {
-                newTasks[0].name.toString()
-            }
-
-            notificationHelpers.showNotification(
-                title,
-                notificationMessage,
-                NotificationType.TASK
-            )
-        }
-    }
-
     companion object {
         const val NOTIFICATION_SERVICE_ID = 1
         private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
-        private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
     }
 }
-
