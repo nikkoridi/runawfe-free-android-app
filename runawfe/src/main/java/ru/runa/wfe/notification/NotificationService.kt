@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
-import ru.runa.wfe.notification.NotificationLogic.NotificationType
+import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfChatRoom
@@ -33,7 +34,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 class NotificationService : Service() {
-    private lateinit var notificationLogic: NotificationLogic
+    private lateinit var notificationHelpers: NotificationHelpers
     private lateinit var preferencesManager: PreferencesManager
     private lateinit var thread: HandlerThread
     private lateinit var notificationServiceScope: CoroutineScope
@@ -51,7 +52,7 @@ class NotificationService : Service() {
     override fun onCreate() {
         super.onCreate()
         preferencesManager = PreferencesManager(this)
-        notificationLogic = NotificationLogic(this)
+        notificationHelpers = NotificationHelpers(this)
         registerReceiver(
             permissionReceiver,
             IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
@@ -135,7 +136,7 @@ class NotificationService : Service() {
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = notificationLogic.getOrCreateChannel(
+        val serviceChannel = notificationHelpers.getOrCreateChannel(
             1,
             NotificationType.DEFAULT,
             this.getString(R.string.notifications_settings),
@@ -145,7 +146,7 @@ class NotificationService : Service() {
         NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
         startForeground(NOTIFICATION_SERVICE_ID, serviceStartNotification)
 
-        notificationLogic.createNotificationChannels()
+        notificationHelpers.createNotificationChannels()
 
         notificationServiceScope.launch {
             while (isActive) {
@@ -211,7 +212,7 @@ class NotificationService : Service() {
                 notificationMessage = newMessages[0].text.toString()
             }
 
-            notificationLogic.showNotification(
+            notificationHelpers.showNotification(
                 title,
                 notificationMessage,
                 NotificationType.MESSAGE
@@ -265,7 +266,7 @@ class NotificationService : Service() {
                 newTasks[0].name.toString()
             }
 
-            notificationLogic.showNotification(
+            notificationHelpers.showNotification(
                 title,
                 notificationMessage,
                 NotificationType.TASK

@@ -17,7 +17,7 @@ import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
-import ru.runa.wfe.notification.NotificationLogic.NotificationType
+import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat
 
 class NotificationSettingsFragment : PreferenceFragmentCompat() {

@@ -1,7 +1,6 @@
 package ru.runa.wfe.notification
 
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,7 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import ru.runa.wfe.MainActivity
 import ru.runa.wfe.R
 
-class NotificationLogic(val context: Context) {
+class NotificationHelpers(val context: Context) {
     private val notificationManager = NotificationManagerCompat.from(context)
 
     fun createNotificationChannels() {
