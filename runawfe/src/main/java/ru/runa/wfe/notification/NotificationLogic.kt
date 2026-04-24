@@ -2,9 +2,6 @@ package ru.runa.wfe.notification
 
 import android.content.Context
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
@@ -19,28 +16,9 @@ import java.time.format.DateTimeFormatter
 class NotificationLogic(
     private val context: Context,
     private val notificationHelpers: NotificationHelpers,
-    private val preferencesManager: PreferencesManager
-) {
-
-    fun saveLastCheckData(lastCheck: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            preferencesManager.setKey(
-                PreferencesManager.LAST_CHECK,
-                lastCheck
-            )
-        }
-    }
-
-    fun loadLastCheckData() {
-        val lastCheck = OffsetDateTime.parse(
-            preferencesManager.getValue(
-                PreferencesManager.LAST_CHECK,
-                OffsetDateTime.now(ZoneOffset.UTC).toString()
-            )
-        )
-            .withOffsetSameLocal(ZoneOffset.UTC)
-        lastTasksCheck = lastCheck
-    }
+    lastTasksCheckTime: OffsetDateTime = OffsetDateTime.now()) {
+    var lastTasksCheck: OffsetDateTime = lastTasksCheckTime
+        private set
 
     suspend fun checkNewChatMessagesAndNotify() {
         try {
@@ -129,6 +107,9 @@ class NotificationLogic(
                     NotificationHelpers.NotificationType.TASK
                 )
             }
+            lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
+            PreferencesManager.setKey(context, PreferencesManager.LAST_CHECK,
+                lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
@@ -148,8 +129,6 @@ class NotificationLogic(
             }
             return newTasks
         }
-        lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
-        saveLastCheckData(lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
         return null
     }
 
@@ -179,8 +158,4 @@ class NotificationLogic(
         val title: String,
         val message: String
     )
-
-    companion object {
-        private var lastTasksCheck: OffsetDateTime = OffsetDateTime.now()
-    }
 }

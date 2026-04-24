@@ -91,5 +91,15 @@ class PreferencesManager(private val context: Context) {
         val IS_LOGGED = booleanPreferencesKey("isLogged")
         val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")
+
+        suspend fun <T> setKey(context: Context, key: Preferences.Key<T>, value: T) {
+            context.dataStore.edit {
+                it[key] = value
+            }
+        }
+
+        suspend fun <T> getValue(context: Context, key: Preferences.Key<T>, defaultValue: T): T {
+            return context.dataStore.data.first()[key] ?: defaultValue
+        }
     }
 }

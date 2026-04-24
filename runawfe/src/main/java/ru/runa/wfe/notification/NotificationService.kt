@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -72,8 +73,16 @@ class NotificationService : Service() {
                 }
             }
         }
-        notificationLogic = NotificationLogic(this, notificationHelpers, preferencesManager)
-        notificationLogic.loadLastCheckData()
+
+        val lastCheck = OffsetDateTime.parse(
+            preferencesManager.getValue(
+                PreferencesManager.LAST_CHECK,
+                OffsetDateTime.now(ZoneOffset.UTC).toString()
+            )
+        )
+            .withOffsetSameLocal(ZoneOffset.UTC)
+        notificationLogic = NotificationLogic(this, notificationHelpers, lastCheck)
+
         setNotifications()
         return START_STICKY
     }
@@ -91,11 +100,13 @@ class NotificationService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        notificationLogic.saveLastCheckData(
-            OffsetDateTime.now(ZoneOffset.UTC)
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        )
         stopSelf()
+        CoroutineScope(Dispatchers.Default + SupervisorJob()).launch {
+            preferencesManager.setKey(
+                PreferencesManager.LAST_CHECK,
+                notificationLogic.lastTasksCheck.toString()
+            )
+        }
         Log.i(this.javaClass.name, "Notification service task removed")
         super.onTaskRemoved(rootIntent)
     }
