@@ -26,7 +26,6 @@ import ru.runa.wfe.ui.notification.DurationPreference
 import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class NotificationService : Service() {
     private lateinit var notificationHelpers: NotificationHelpers
@@ -135,6 +134,7 @@ class NotificationService : Service() {
 
         notificationHelpers.createNotificationChannels()
 
+        // Main polling loop for notifications
         notificationServiceScope.launch {
             while (isActive) {
                 val tasksJob = if (notificationHelpers.isChannelEnabled(NotificationType.TASK)) {

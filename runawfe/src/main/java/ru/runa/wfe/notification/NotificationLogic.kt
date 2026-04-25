@@ -16,7 +16,8 @@ import java.time.format.DateTimeFormatter
 class NotificationLogic(
     private val context: Context,
     private val notificationHelpers: NotificationHelpers,
-    lastTasksCheckTime: OffsetDateTime = OffsetDateTime.now()) {
+    lastTasksCheckTime: OffsetDateTime = OffsetDateTime.now()
+) {
     var lastTasksCheck: OffsetDateTime = lastTasksCheckTime
         private set
 
@@ -25,11 +26,14 @@ class NotificationLogic(
             val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
             if (!chatRooms.isNullOrEmpty()) {
                 for (room in chatRooms) {
-                    val newMessages = checkNewMessages(room)
+                    val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
+                    if (newMessagesCount == 0) continue
+                    val newMessages = checkNewMessages(room, newMessagesCount)
                     if (!newMessages.isNullOrEmpty()) {
                         val content = newChatMessagesNotificationContent(room.id, newMessages)
                         notificationHelpers.showNotification(
-                            content.title, content.message,
+                            content.title,
+                            content.message,
                             NotificationHelpers.NotificationType.MESSAGE
                         )
                     }
@@ -40,26 +44,28 @@ class NotificationLogic(
         }
     }
 
-    private suspend fun checkNewMessages(room: WfChatRoom): List<MessageAddedBroadcast>? {
-        val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
-        if (newMessagesCount > 0) {
-            try {
-                val chatRoomMessages =
-                    room.id?.let {
-                        ApiClient.chatService.getChatMessagesUsingGET(it).body()
-                    }
-                if (!chatRoomMessages.isNullOrEmpty() &&
-                    newMessagesCount < chatRoomMessages.size - 1
-                ) {
-                    return chatRoomMessages.subList(0, newMessagesCount)
+    private suspend fun checkNewMessages(
+        room: WfChatRoom,
+        newMessagesCount: Int
+    ): List<MessageAddedBroadcast>? {
+        try {
+            val chatRoomMessages =
+                room.id?.let {
+                    ApiClient.chatService.getChatMessagesUsingGET(it).body()
                 }
-            } catch (ex: Exception) {
-                Log.e(this::class.simpleName, ex.message.toString())
+            if (chatRoomMessages.isNullOrEmpty() || newMessagesCount >= chatRoomMessages.size) {
+                return null
             }
+            return chatRoomMessages.subList(0, newMessagesCount)
+        } catch (ex: Exception) {
+            Log.e(this::class.simpleName, ex.message.toString())
+            return null
         }
-        return null
     }
 
+    /*
+    * Null and empty checks of list are performed in the caller function
+    * */
     private fun newChatMessagesNotificationContent(
         roomId: Long?,
         newMessages: List<MessageAddedBroadcast>
@@ -108,8 +114,10 @@ class NotificationLogic(
                 )
             }
             lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
-            PreferencesManager.setKey(context, PreferencesManager.LAST_CHECK,
-                lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+            PreferencesManager.setKey(
+                context, PreferencesManager.LAST_CHECK,
+                lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            )
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
         }
@@ -132,6 +140,9 @@ class NotificationLogic(
         return null
     }
 
+    /*
+    * Null and empty checks of list are performed in the caller function
+    * */
     private fun newTasksNotificationContent(newTasks: List<WfeTask>): NotificationContent {
         val title = "${context.getString(R.string.new_data_notifications)} ${
             context.resources.getQuantityString(
