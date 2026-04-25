@@ -137,10 +137,14 @@ class NotificationService : Service() {
 
         notificationServiceScope.launch {
             while (isActive) {
-                val tasksJob = launch { notificationLogic.checkNewChatMessagesAndNotify() }
-                val chatJob = launch { notificationLogic.checkNewTasksAndNotify() }
-                tasksJob.join()
-                chatJob.join()
+                val tasksJob = if (notificationHelpers.isChannelEnabled(NotificationType.TASK)) {
+                    launch { notificationLogic.checkNewTasksAndNotify() }
+                } else null
+                val chatJob = if (notificationHelpers.isChannelEnabled(NotificationType.MESSAGE)) {
+                    launch { notificationLogic.checkNewChatMessagesAndNotify() }
+                } else null
+                tasksJob?.join()
+                chatJob?.join()
                 delay(pollingInterval)
             }
         }

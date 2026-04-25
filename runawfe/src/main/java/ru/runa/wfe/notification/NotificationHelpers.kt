@@ -21,11 +21,19 @@ class NotificationHelpers(val context: Context) {
     private var notificationIdCounter = 2000 // To prevent id conflicts with other notifications
 
     fun createNotificationChannels() {
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        NotificationType.entries.forEach { type ->
-            val channel = getOrCreateChannel(type, importance)
-            notificationManager.createNotificationChannel(channel)
+        if (notificationManager.areNotificationsEnabled()) {
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            NotificationType.entries.forEach { type ->
+                val channel = getOrCreateChannel(type, importance)
+                notificationManager.createNotificationChannel(channel)
+            }
         }
+    }
+
+    fun isChannelEnabled(type: NotificationType): Boolean {
+        return (notificationManager.areNotificationsEnabled()
+                && (notificationManager.getNotificationChannel(type.channelId)?.importance
+            ?: NotificationManager.IMPORTANCE_UNSPECIFIED) != NotificationManager.IMPORTANCE_NONE)
     }
 
     fun getOrCreateChannel(
