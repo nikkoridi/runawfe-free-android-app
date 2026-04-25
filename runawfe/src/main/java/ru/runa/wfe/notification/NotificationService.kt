@@ -128,12 +128,7 @@ class NotificationService : Service() {
             .setContentTitle(getString(R.string.notifications_service_title))
             .setContentText(getString(R.string.notifications_service_message))
             .build()
-        val serviceChannel = notificationHelpers.getOrCreateChannel(
-            1,
-            NotificationType.DEFAULT,
-            this.getString(R.string.notifications_settings),
-            this.getString(R.string.notifications_service_message)
-        )
+        val serviceChannel = notificationHelpers.getOrCreateChannel(NotificationType.DEFAULT)
         serviceChannel.setShowBadge(false)
         NotificationManagerCompat.from(this).createNotificationChannel(serviceChannel)
         startForeground(NOTIFICATION_SERVICE_ID, serviceStartNotification)
