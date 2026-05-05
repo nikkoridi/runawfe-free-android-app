@@ -2,6 +2,7 @@ package ru.runa.wfe.notification
 
 import android.content.Context
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
@@ -44,7 +45,8 @@ class NotificationLogic(
         }
     }
 
-    private suspend fun checkNewMessages(
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    suspend fun checkNewMessages(
         room: WfChatRoom,
         newMessagesCount: Int
     ): List<MessageAddedBroadcast>? {
@@ -53,7 +55,7 @@ class NotificationLogic(
                 room.id?.let {
                     ApiClient.chatService.getChatMessagesUsingGET(it).body()
                 }
-            if (chatRoomMessages.isNullOrEmpty() || newMessagesCount >= chatRoomMessages.size) {
+            if (chatRoomMessages.isNullOrEmpty() || newMessagesCount > chatRoomMessages.size) {
                 return null
             }
             return chatRoomMessages.subList(0, newMessagesCount)
@@ -66,7 +68,8 @@ class NotificationLogic(
     /*
     * Null and empty checks of list are performed in the caller function
     * */
-    private fun newChatMessagesNotificationContent(
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    fun newChatMessagesNotificationContent(
         roomId: Long?,
         newMessages: List<MessageAddedBroadcast>
     ): NotificationContent {
@@ -123,7 +126,8 @@ class NotificationLogic(
         }
     }
 
-    private fun checkNewTasks(tasks: List<WfeTask>?): List<WfeTask>? {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    fun checkNewTasks(tasks: List<WfeTask>?): List<WfeTask>? {
         if (!tasks.isNullOrEmpty()) {
             val newTasks = ArrayList<WfeTask>()
             for (task in tasks) {
@@ -143,7 +147,8 @@ class NotificationLogic(
     /*
     * Null and empty checks of list are performed in the caller function
     * */
-    private fun newTasksNotificationContent(newTasks: List<WfeTask>): NotificationContent {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    fun newTasksNotificationContent(newTasks: List<WfeTask>): NotificationContent {
         val title = "${context.getString(R.string.new_data_notifications)} ${
             context.resources.getQuantityString(
                 R.plurals.tasks_count,
