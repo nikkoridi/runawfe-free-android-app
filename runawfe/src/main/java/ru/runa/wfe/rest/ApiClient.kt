@@ -69,26 +69,32 @@ object ApiClient {
         basicApiClient.addAuthorization("token", ApiInterceptor())
     }
 
-    fun getBaseUrl(url: String): String {
-        try {
-            var url = url.trim()
-            if (!(url.startsWith("https://") ||
-                url.startsWith("http://"))) {
-                url = "http://$url"
-            }
-            val baseUrl = Uri.parse(url)
-            val port = if (baseUrl.port != -1) ":${baseUrl.port}" else ""
-            if (baseUrl.host != null) {
-                return "${baseUrl.scheme}://${baseUrl.host}$port"
-            }
+    fun toOrigin(url: String): String {
+        val trimmedUrl = url.trim()
+        if (trimmedUrl.isEmpty()) return ""
+
+        val withScheme = when {
+            (trimmedUrl.startsWith("https://") ||
+                    trimmedUrl.startsWith("http://")) -> trimmedUrl
+            trimmedUrl.contains(":/") -> return ""
+            else ->  "http://$trimmedUrl"
+        }
+
+         try {
+             val originUrl = Uri.parse(withScheme)
+             val scheme = originUrl.scheme ?: "http"
+             val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
+             return if (originUrl.host != null) {
+                 "$scheme://${originUrl.host}$port"
+             } else ""
         } catch (e: Exception) {
-            Log.e("API Client", "Invalid URL")
+            Log.e(this::class.simpleName, "Invalid URL: $url")
         }
         return ""
     }
 
     suspend fun checkServer(url: String): ServerCheckResult = withContext(Dispatchers.IO) {
-        val clearBaseUrl = getBaseUrl(url)
+        val clearBaseUrl = toOrigin(url)
         if (clearBaseUrl.isEmpty()) {
             return@withContext ServerCheckResult.Invalid
         }

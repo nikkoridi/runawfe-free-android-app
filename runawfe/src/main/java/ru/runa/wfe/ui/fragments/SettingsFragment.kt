@@ -82,7 +82,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             .getValue(PreferencesManager.WEBVIEW_URL, "")
         if (changeUrl.isNotEmpty()) {
             if (changeUrl != oldUrl) {
-                isUrlHostChanged = ApiClient.getBaseUrl(changeUrl) != ApiClient.getBaseUrl(oldUrl)
+                isUrlHostChanged = ApiClient.toOrigin(changeUrl) != ApiClient.toOrigin(oldUrl)
                 if (isUrlHostChanged) {
                     lifecycleScope.launch {
                         val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
