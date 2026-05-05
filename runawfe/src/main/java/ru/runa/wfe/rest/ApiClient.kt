@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,9 +25,29 @@ import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    private var BASE_URL: String = "http://10.0.2.2:8080/"
+    const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080/"
+    var baseUrl: String = DEFAULT_SERVER_URL
+        private set
 
     private lateinit var basicApiClient: ApiClient
+
+    private var _chatService: ChatControllerApi? = null
+    val chatService: ChatControllerApi
+        get() = _chatService ?: basicApiClient.createService(ChatControllerApi::class.java).also { _chatService = it }
+
+    private var _taskService: TaskControllerApi? = null
+    val taskService: TaskControllerApi
+        get() = _taskService ?: basicApiClient.createService(TaskControllerApi::class.java).also { _taskService = it }
+
+    val authService: AuthControllerApi
+        get() = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .client(okHttpClientBuilder.build())
+            // Jackson doesn't work well with text/plain responses
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(AuthControllerApi::class.java)
 
     private val okHttpClientBuilder = OkHttpClient.Builder()
         .callTimeout(1, TimeUnit.MINUTES)
@@ -42,24 +60,22 @@ object ApiClient {
         .findAndRegisterModules()
         .addMixIn(MessageAddedBroadcast::class.java, MessageAddedBroadcastMixin::class.java)
 
-
     fun isApiClientInitialized(): Boolean = this::basicApiClient.isInitialized
 
-
     fun setServerUrl(checkedUrl: ServerCheckResult) {
-        CoroutineScope(Dispatchers.IO).launch {
-            if (checkedUrl is ServerCheckResult.Valid) {
-                BASE_URL = checkedUrl.baseUrl
-                initBasicApiClient()
-            } else {
-                Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
-            }
+        if (checkedUrl is ServerCheckResult.Valid) {
+            baseUrl = checkedUrl.baseUrl
+            initBasicApiClient()
+            _chatService = null
+            _taskService = null
+        } else {
+            Log.e(this::class.simpleName, "Given URL is not a RunaWFE server")
         }
     }
 
     private fun initBasicApiClient() {
         basicApiClient = ApiClient(
-            BASE_URL,
+            baseUrl,
             okHttpClientBuilder,
             mapper,
             null,
@@ -130,26 +146,6 @@ object ApiClient {
             }
         }
     }
-
-    val authService: AuthControllerApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(okHttpClientBuilder.build())
-            // Jackson doesn't work well with text/plain responses
-            .addConverterFactory(ScalarsConverterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(AuthControllerApi::class.java)
-    }
-
-    val chatService: ChatControllerApi by lazy {
-        basicApiClient.createService(ChatControllerApi::class.java)
-    }
-
-    val taskService: TaskControllerApi by lazy {
-        basicApiClient.createService(TaskControllerApi::class.java)
-    }
-
 }
 
 sealed class ServerCheckResult {
