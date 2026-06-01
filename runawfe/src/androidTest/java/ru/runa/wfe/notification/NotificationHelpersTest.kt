@@ -23,7 +23,7 @@ class NotificationHelpersTest {
     }
     private val type = NotificationType.DEFAULT
     @get:Rule
-    val notificationPermission: GrantPermissionRule = GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+    val notificationPermission: GrantPermissionRule = TestHelpers.grantPostNotificationPermission()
 
     @Before
     fun setUp() {

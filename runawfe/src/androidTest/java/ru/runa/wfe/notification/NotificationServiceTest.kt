@@ -30,8 +30,7 @@ class NotificationServiceTest {
         GrantPermissionRule.grant(Manifest.permission.FOREGROUND_SERVICE)
 
     @get:Rule
-    val notificationPermission: GrantPermissionRule =
-        GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
+    val notificationPermission: GrantPermissionRule = TestHelpers.grantPostNotificationPermission()
 
     @Before
     fun setUp() = runTest {
