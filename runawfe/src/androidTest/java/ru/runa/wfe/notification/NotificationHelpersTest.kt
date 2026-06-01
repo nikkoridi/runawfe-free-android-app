@@ -1,6 +1,5 @@
 package ru.runa.wfe.notification
 
-import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build

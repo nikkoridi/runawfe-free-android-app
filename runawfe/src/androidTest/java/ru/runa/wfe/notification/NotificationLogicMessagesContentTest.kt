@@ -59,7 +59,7 @@ class NotificationLogicMessagesContentTest {
             content.title,
             "${context.getString(R.string.messages_chat_id_template, roomId)}:"
         )
-        assertEquals(content.message, message)
+        assertEquals(message, content.message)
     }
 
     @Test
@@ -80,13 +80,12 @@ class NotificationLogicMessagesContentTest {
             notificationLogic.newChatMessagesNotificationContent(roomId, oneMessageInOnChat)
 
         assertEquals(
-            content.title,
             "${
                 context.getString(
                     R.string.messages_chat_id_template,
                     roomId
                 )
-            }: $numberOfMessages ${messagesPluralsSuffixes(numberOfMessages)}",
+            }: $numberOfMessages ${messagesPluralsSuffixes(numberOfMessages)}", content.title
         )
         val messages =
             "${testChatAuthorOne.name}: $message\n".repeat(3)

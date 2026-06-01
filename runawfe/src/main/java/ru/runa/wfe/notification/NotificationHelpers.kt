@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import ru.runa.wfe.MainActivity
@@ -54,8 +53,7 @@ class NotificationHelpers(val context: Context) {
     fun showNotification(title: String, message: String, type: NotificationType) {
         // Android 13 (API level 33) and higher requires a permission
         // for notificationManager.notify() call
-        if (ActivityCompat.checkSelfPermission(
-                context,
+        if (context.checkSelfPermission(
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
             || (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU)
