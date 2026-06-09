@@ -11,13 +11,13 @@
 
         <Preference
             app:iconSpaceReserved="false"
-            app:key="tasksSound"
+            app:key="tasksChannel"
             app:summary="@string/summary_setup_notifications"
             app:title="@string/tasks_notifications_title" />
 
         <Preference
             app:iconSpaceReserved="false"
-            app:key="messagesSound"
+            app:key="messagesChannel"
             app:summary="@string/summary_setup_notifications"
             app:title="@string/messages_notifications_title" />
 

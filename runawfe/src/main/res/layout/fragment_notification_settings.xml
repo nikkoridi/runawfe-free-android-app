@@ -26,7 +26,7 @@
         android:inputType="time" />
 
     <TextView
-        android:id="@+id/tasksSoundTitle"
+        android:id="@+id/tasksChannelTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -35,7 +35,7 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/tasksSound"
+        android:id="@+id/tasksChannel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="5dp"
@@ -45,7 +45,7 @@
         android:clickable="true" />
 
     <TextView
-        android:id="@+id/messagesSoundTitle"
+        android:id="@+id/messagesChannelTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -54,7 +54,7 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/messagesSound"
+        android:id="@+id/messagesChannel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="5dp"

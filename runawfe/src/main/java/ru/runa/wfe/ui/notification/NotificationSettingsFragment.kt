@@ -116,7 +116,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         val key = preference.key
-        if (key.equals("tasksSound") || key.equals("messagesSound")) {
+        if (key.equals("tasksChannel") || key.equals("messagesChannel")) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 showNotificationSettingsOreo(key)
             } else {
@@ -125,13 +125,13 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
                 // Show custom ringtone picker on old versions
                 when (key) {
-                    "tasksSound" -> {
+                    "tasksChannel" -> {
                         runRingtonePicker(preference.title.toString(), key)
                         lastPickedSoundKey = key
                         return true
                     }
 
-                    "messagesSound" -> {
+                    "messagesChannel" -> {
                         runRingtonePicker(preference.title.toString(), key)
                         lastPickedSoundKey = key
                         return true
