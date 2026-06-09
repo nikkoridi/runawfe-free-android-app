@@ -26,7 +26,6 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var changeURLView: SearchView
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
-    private var isUrlHostChanged: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -53,6 +52,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
             isShowUrl = isChecked
+            saveShowUrl()
         }
 
         changeURLView.setOnQueryTextFocusChangeListener { _, hasFocus ->
@@ -69,51 +69,62 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         }
     }
 
-    private fun savePreferences() {
+    private fun saveShowUrl() {
         lifecycleScope.launch {
             preferencesManager.setKey(PreferencesManager.SHOW_URL, isShowUrl)
         }
+    }
+
+    private fun savePreferences() {
+        saveShowUrl()
         onUrlChanged()
     }
 
     private fun onUrlChanged() {
         val changeUrl = changeURLView.query.toString()
-        val oldUrl = preferencesManager
-            .getValue(PreferencesManager.WEBVIEW_URL, "")
-        if (changeUrl.isNotEmpty()) {
-            if (changeUrl != oldUrl) {
-                isUrlHostChanged = ApiClient.toOrigin(changeUrl) != ApiClient.toOrigin(oldUrl)
-                if (isUrlHostChanged) {
-                    lifecycleScope.launch {
-                        val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
-                        // Don't block possibility to change url in case of bad network
-                        if (checkResult != ServerCheckResult.Invalid) {
-                            preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-                        }
-                        if (checkResult is ServerCheckResult.Valid) {
-                            ApiClient.setServerUrl(checkResult)
-                            preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
-                            preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
-                        } else {
-                            view?.let {
-                                Snackbar.make(
-                                    it,
-                                    if (checkResult is ServerCheckResult.Invalid)
-                                        R.string.invalid_url
-                                    else R.string.network_error_url,
-                                    30000
-                                )
-                                    .show()
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
+        if (changeUrl.isEmpty()) {
             // TODO: it's the third copy, will it be better as interface for Activity?
             val emptyURLDialogFragment = EmptyURLDialogFragment()
             emptyURLDialogFragment.activityOfMessage = requireActivity()
             emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+            return
+        }
+        val oldUrl = preferencesManager.getValue(PreferencesManager.WEBVIEW_URL, "")
+        if (changeUrl == oldUrl) {
+            return
+        }
+        val isUrlHostsEqual = ApiClient.toOrigin(changeUrl) == ApiClient.toOrigin(oldUrl)
+        lifecycleScope.launch {
+            if (isUrlHostsEqual) {
+                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+            } else {
+                val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
+                when {
+                    // Don't block possibility to change url in case of bad network
+                    checkResult != ServerCheckResult.Invalid -> {
+                        preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+                    }
+
+                    checkResult is ServerCheckResult.Valid -> {
+                        ApiClient.setServerUrl(checkResult)
+                        preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    }
+
+                    else -> {
+                        view?.let {
+                            Snackbar.make(
+                                it,
+                                if (checkResult is ServerCheckResult.Invalid)
+                                    R.string.invalid_url
+                                else R.string.network_error_url,
+                                30000
+                            )
+                                .show()
+                        }
+                    }
+                }
+            }
         }
     }
 
