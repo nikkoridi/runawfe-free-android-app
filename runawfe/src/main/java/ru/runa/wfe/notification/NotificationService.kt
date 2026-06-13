@@ -1,10 +1,7 @@
 package ru.runa.wfe.notification
 
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -23,7 +20,6 @@ import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.ui.notification.DurationPreference
-import ru.runa.wfe.ui.notification.PermissionsConstants
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
@@ -34,25 +30,10 @@ class NotificationService : Service() {
     private lateinit var thread: HandlerThread
     private lateinit var notificationServiceScope: CoroutineScope
 
-    private val permissionReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val permissionGranted = intent.getBooleanExtra(
-                "permission_granted",
-                false
-            )
-            if (permissionGranted) setNotifications()
-        }
-    }
-
     override fun onCreate() {
         super.onCreate()
         preferencesManager = PreferencesManager(this)
         notificationHelpers = NotificationHelpers(this)
-        registerReceiver(
-            permissionReceiver,
-            IntentFilter(PermissionsConstants.ACTION_REQUEST_PERMISSION.actionName),
-            Context.RECEIVER_NOT_EXPORTED
-        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -93,7 +74,6 @@ class NotificationService : Service() {
         if (this::thread.isInitialized) {
             thread.quitSafely()
         }
-        unregisterReceiver(permissionReceiver)
         Log.i(this.javaClass.name, "Notification service destroyed")
         super.onDestroy()
     }
@@ -137,10 +117,10 @@ class NotificationService : Service() {
         // Main polling loop for notifications
         notificationServiceScope.launch {
             while (isActive) {
-                val tasksJob = if (notificationHelpers.isChannelEnabled(NotificationType.TASK)) {
+                val tasksJob = if (NotificationHelpers.isChannelEnabled(NotificationType.TASK, this@NotificationService)) {
                     launch { notificationLogic.checkNewTasksAndNotify() }
                 } else null
-                val chatJob = if (notificationHelpers.isChannelEnabled(NotificationType.MESSAGE)) {
+                val chatJob = if (NotificationHelpers.isChannelEnabled(NotificationType.MESSAGE, this@NotificationService)) {
                     launch { notificationLogic.checkNewChatMessagesAndNotify() }
                 } else null
                 tasksJob?.join()

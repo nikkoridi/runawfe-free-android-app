@@ -1,7 +1,9 @@
 package ru.runa.wfe.ui.notification
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
@@ -9,14 +11,19 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
+import ru.runa.wfe.MainActivity
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.notification.NotificationHelpers
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat
 
@@ -105,7 +112,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun runRingtonePicker(title: String, key: String) {
+    private fun runRingtonePicker(title: String) {
         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, title)
         intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
@@ -114,27 +121,67 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         ringtonePickerLauncher.launch(intent)
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun showPostNotificationPermissionRequest(type: NotificationType) {
+        val activity: MainActivity? = (activity as? MainActivity)
+        activity?.requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
+            if (isGranted) {
+                activity.startNotificationService()
+                showNotificationSettingsOreo(type)
+            }
+        }
+    }
+
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
-        val key = preference.key
-        if (key.equals(NotificationType.TASK.preferenceName) ||
-            key.equals(NotificationType.MESSAGE.preferenceName)) {
+        val channelType = when (preference.key) {
+            NotificationType.TASK.preferenceName -> NotificationType.TASK
+            NotificationType.MESSAGE.preferenceName -> NotificationType.MESSAGE
+            else -> {
+                NotificationType.DEFAULT
+            }
+        }
+        if (channelType != NotificationType.DEFAULT) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                showNotificationSettingsOreo(key)
+                if (!NotificationHelpers.channelExists(channelType, requireContext())) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(
+                            requireContext(),
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        showPostNotificationPermissionRequest(channelType)
+                    } else {
+                        val explainDialogBuilder = AlertDialog.Builder(requireContext())
+                            .setTitle(R.string.channel_not_exist)
+                            .setMessage(
+                                permissionsConstantsMap["POST_NOTIFICATIONS"]?.explanation
+                                    ?: R.string.permission_need
+                            )
+                            .setNeutralButton("OK", null)
+                        explainDialogBuilder.create().show()
+                    }
+                } else {
+                    showNotificationSettingsOreo(channelType)
+                }
             } else {
                 // To show settings screen on old versions
                 // showNotificationSettingsBelowOreo()
 
                 // Show custom ringtone picker on old versions
-                when (key) {
-                    NotificationType.TASK.preferenceName -> {
-                        runRingtonePicker(preference.title.toString(), key)
-                        lastPickedSoundKey = key
+                when (channelType) {
+                    NotificationType.TASK -> {
+                        runRingtonePicker(preference.title.toString())
+                        lastPickedSoundKey = channelType.preferenceName
                         return true
                     }
 
-                    NotificationType.MESSAGE.preferenceName -> {
-                        runRingtonePicker(preference.title.toString(), key)
-                        lastPickedSoundKey = key
+                    NotificationType.MESSAGE -> {
+                        runRingtonePicker(preference.title.toString())
+                        lastPickedSoundKey = channelType.preferenceName
+                        return true
+                    }
+
+                    else -> {
                         return true
                     }
                 }
@@ -145,16 +192,10 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         return super.onPreferenceTreeClick(preference)
     }
 
-    private fun showNotificationSettingsOreo(key: String) {
+    private fun showNotificationSettingsOreo(type: NotificationType) {
         val intent = Intent()
         intent.setAction(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
         intent.putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
-        val type = if (key == NotificationType.TASK.preferenceName) {
-            NotificationType.TASK
-        }
-        else {
-            NotificationType.MESSAGE
-        }
         intent.putExtra(Settings.EXTRA_CHANNEL_ID, type.channelId)
         context?.startActivity(intent)
     }
