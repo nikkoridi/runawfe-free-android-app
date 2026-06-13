@@ -92,7 +92,7 @@ class NotificationHelpers(val context: Context) {
         val channelId: String,
         val titleResId: Int,
         val descriptionResId: Int,
-        val soundKey: String
+        val preferenceName: String
     ) {
         DEFAULT(
             "ru.runa.wfe.notifications",
@@ -104,13 +104,13 @@ class NotificationHelpers(val context: Context) {
             "ru.runa.wfe.notifications.tasks",
             R.string.tasks_channel_title,
             R.string.tasks_channel_description,
-            "tasksSound"
+            "tasksChannel"
         ),
         MESSAGE(
             "ru.runa.wfe.notifications.messages",
             R.string.messages_channel_title,
             R.string.messages_channel_description,
-            "messagesSound"
+            "messagesChannel"
         )
     }
 }
