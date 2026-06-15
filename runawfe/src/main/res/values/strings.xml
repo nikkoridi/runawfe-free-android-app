@@ -51,13 +51,14 @@
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
     <string name="messages_chat_id_template">Чат процесса %d</string>
+    <string name="channel_not_exist">Категория оповещений не существует</string>
 
     <string name="permission_request_title">Запрос разрешения</string>
-    <string name="permission_notification_need">Разрешение требуется для работы оповещений</string>
+    <string name="permission_notification_need">Для получения оповещений требуются: разрешение (если Android версии 11 и выше), адрес сервера и данные пользователя. Перезагрузите приложение, если все условия выполнены, но этот диалог виден</string>
+    <string name="permission_need">Для работы приложения требуется разрешение</string>
     <string name="permission_set">Настроить разрешение</string>
-    <string name="permission_snackbar_set">Я передумал</string>
     <string name="permission_given">Разрешение получено</string>
-    <string name="permission_error">Отложено получение разрешения</string>
+    <string name="refuse_action">Не сейчас</string>
 
     <string name="check_delay_title">Интервал проверки</string>
     <string name="check_delay_help">Часы:минуты\nЗначение 00:00 отключит проверку</string>
