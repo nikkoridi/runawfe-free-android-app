@@ -62,6 +62,7 @@ class NotificationLogicMessagesContentTest {
         assertEquals(message, content.message)
     }
 
+    // NOTE: If this test fails, check device language settings. Not having Russian as a main language may cause locale strings mismatch.
     @Test
     fun newChatMessagesNotificationContent_SeveralMessages() {
         val testChatAuthorOne = Actor(name = "Первый отправитель")

@@ -40,7 +40,7 @@ class NotificationHelpersTest {
 
     @Test
     fun isChannelEnabled_PermissionGranted() {
-        assertTrue(helpers.isChannelEnabled(type))
+        assertTrue(NotificationHelpers.isChannelEnabled(type, context))
     }
 
     @Test
