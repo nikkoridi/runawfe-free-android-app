@@ -12,3 +12,5 @@ By using the web interface an administrator can:
 * Include or exclude actors from the groups
 * Grant permissions on system objects to actors and groups of actors
 * Terminate business process instances
+
+For more information, see runawfe.org
