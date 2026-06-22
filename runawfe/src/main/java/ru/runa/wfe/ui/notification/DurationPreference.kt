@@ -30,6 +30,12 @@ class DurationPreference(
     }
 
     companion object {
-        const val DEFAULT = 3 // 3 min default value
+        const val DEFAULT = 180_000 // 3 min default value
     }
+}
+
+enum class TimeUnits {
+    SECONDS,
+    MINUTES,
+    HOURS
 }

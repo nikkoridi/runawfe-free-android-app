@@ -47,6 +47,19 @@
         <item quantity="many">минут</item>
         <item quantity="other">мин.</item>
     </plurals>
+    <plurals name="seconds">
+        <item quantity="one">секунда</item>
+        <item quantity="few">секунды</item>
+        <item quantity="many">секунд</item>
+        <item quantity="other">сек.</item>
+    </plurals>
+
+    <string-array name="time_duration_units">
+        <item>секунд</item>
+        <item>минут</item>
+        <item>часов</item>
+    </string-array>
+
     <string name="new_data_notifications">Hовых:</string>
     <string name="tasks_channel_title">Новые задачи</string>
     <string name="messages_channel_title">Новые сообщения</string>
@@ -61,7 +74,7 @@
     <string name="refuse_action">Не сейчас</string>
 
     <string name="check_delay_title">Интервал проверки</string>
-    <string name="check_delay_help">Часы:минуты\nЗначение 00:00 отключит проверку</string>
+    <string name="check_delay_help">Введите частоту проверки данных для уведомлений\nНулевое значение отключит проверку</string>
     <string name="tasks_notifications_title">Уведомления для новых задач</string>
     <string name="messages_notifications_title">Уведомления для новых сообщений</string>
     <string name="summary_setup_notifications">Нажмите для перехода к настройкам</string>

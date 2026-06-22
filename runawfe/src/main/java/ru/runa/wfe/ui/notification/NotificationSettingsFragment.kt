@@ -60,17 +60,22 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun pollingIntervalSummary(number: Int): String {
-        return "$number ${resources.getQuantityString(R.plurals.minutes, number)}"
+    private fun pollingIntervalSummary(durationInSeconds: Int): String {
+        return "$durationInSeconds ${resources.getQuantityString(R.plurals.seconds, durationInSeconds)}"
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
         preferencesManager = PreferencesManager(requireContext())
 
+        val pollingIntervalSeconds = preferencesManager.getValue(
+            PreferencesManager.POLLING_INTERVAL,
+            DurationPreference.DEFAULT
+        ) / 1000
+
         // Set custom preference and it's summary
         val pollingInterval: DurationPreference? = findPreference("pollingInterval")
-        pollingInterval?.summary = pollingInterval?.duration?.let { pollingIntervalSummary(it) }
+        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds)
 
         lifecycleScope.launch {
             if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
@@ -83,7 +88,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
         pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
                 val newInterval = newValue.toString().toIntOrNull()
-                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, 3)
+                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, DurationPreference.DEFAULT)
                 newInterval?.let {
                     if (newInterval != currentPollingInterval) {
                         lifecycleScope.launch {
@@ -92,7 +97,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                                 newInterval
                             )
                         }
-                        pollingInterval.summary = pollingIntervalSummary(newInterval)
+                        pollingInterval.summary = pollingIntervalSummary(newInterval / 1_000)
                     }
                 }
                 true
@@ -106,7 +111,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
             // Currently (March of 2026) setTargetFragment must be called despite the deprecation
             @Suppress("DEPRECATION")
             dialogFragment.setTargetFragment(this, 0)
-            dialogFragment.show(parentFragmentManager, null)
+            dialogFragment.show(parentFragmentManager, "DurationPreferenceDialog")
         } else {
             super.onDisplayPreferenceDialog(preference)
         }
