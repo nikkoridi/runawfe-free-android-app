@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
-import ru.runa.wfe.notification.NotificationService
+import ru.runa.wfe.notification.NotificationScheduler
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
@@ -64,10 +64,10 @@ class MainActivity : AppCompatActivity() {
                         val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                         if (firstRun && sdkTiramisu) {
                             requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
-                                if (isGranted) startNotificationService()
+                                if (isGranted) startNotifying()
                             }
                         } else {
-                            startNotificationService()
+                            startNotifying()
                         }
                         controller.removeOnDestinationChangedListener(this)
                     }
@@ -109,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun canStartNotificationService(): Boolean {
+    private fun canStartNotification(): Boolean {
         val channelsEnabled = NotificationHelpers.isChannelEnabled(NotificationType.TASK, this) ||
                 NotificationHelpers.isChannelEnabled(NotificationType.MESSAGE, this)
         val permissionGranted = (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) ||
@@ -123,9 +123,9 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    fun startNotificationService() {
-        if (canStartNotificationService()) {
-            startForegroundService(Intent(this, NotificationService::class.java))
+    fun startNotifying() {
+        if (canStartNotification()) {
+            NotificationScheduler.start(this)
         }
     }
 
@@ -169,6 +169,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        stopService(Intent(this, NotificationService::class.java))
+        NotificationScheduler.stop(this)
     }
 }
