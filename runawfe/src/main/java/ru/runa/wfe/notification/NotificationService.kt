@@ -41,9 +41,9 @@ class NotificationService : Service() {
         CoroutineScope(Dispatchers.Default).launch {
             preferencesManager.getValueFlow(
                 PreferencesManager.POLLING_INTERVAL,
-                pollingInterval.toInt()
+                pollingInterval
             ).collect { value ->
-                pollingInterval = value.toLong()
+                pollingInterval = value
                 /*
                 The value is nonzero initially (checked in MainActivity)
                 stopSelf() should be called only after service start
@@ -132,6 +132,6 @@ class NotificationService : Service() {
 
     companion object {
         const val NOTIFICATION_SERVICE_ID = 1
-        private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1000
+        private var pollingInterval: Long = DurationPreference.DEFAULT * 60 * 1000
     }
 }

@@ -6,7 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
@@ -87,7 +87,7 @@ class PreferencesManager(private val context: Context) {
         val WEBVIEW_URL = stringPreferencesKey("urlQuery")
         val LAST_VERSION = stringPreferencesKey("last_version")
         val SHOW_URL = booleanPreferencesKey("showUrl")
-        val POLLING_INTERVAL = intPreferencesKey("pollingInterval")
+        val POLLING_INTERVAL = longPreferencesKey("pollingInterval")
         val IS_LOGGED = booleanPreferencesKey("isLogged")
         val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")

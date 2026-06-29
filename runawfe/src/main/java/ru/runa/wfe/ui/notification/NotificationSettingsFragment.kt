@@ -75,7 +75,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
         // Set custom preference and it's summary
         val pollingInterval: DurationPreference? = findPreference("pollingInterval")
-        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds)
+        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds.toInt())
 
         lifecycleScope.launch {
             if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
@@ -87,7 +87,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
 
         pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
-                val newInterval = newValue.toString().toIntOrNull()
+                val newInterval = newValue.toString().toLongOrNull()
                 val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, DurationPreference.DEFAULT)
                 newInterval?.let {
                     if (newInterval != currentPollingInterval) {
@@ -97,7 +97,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                                 newInterval
                             )
                         }
-                        pollingInterval.summary = pollingIntervalSummary(newInterval / 1_000)
+                        pollingInterval.summary = pollingIntervalSummary((newInterval / 1_000).toInt())
                     }
                 }
                 true
