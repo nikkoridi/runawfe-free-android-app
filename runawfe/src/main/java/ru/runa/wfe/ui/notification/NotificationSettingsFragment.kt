@@ -32,9 +32,16 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
         preferencesManager = PreferencesManager.getInstance(requireContext())
+
+        val pollingIntervalSeconds = preferencesManager.getValue(
+            PreferencesManager.POLLING_INTERVAL,
+            DurationPreference.DEFAULT
+        )
+
         // Set custom preference and it's summary
         val pollingInterval: DurationPreference? = findPreference("pollingInterval")
-        pollingInterval?.summary = pollingInterval?.duration?.let { pollingIntervalSummary(it) }
+        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds.toInt() / 60)
+
         lifecycleScope.launch {
             if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
                 preferencesManager.setKey(
@@ -43,9 +50,10 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                 )
             }
         }
+
         pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
-                val newInterval = newValue.toString().toIntOrNull()
-                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, 3)
+                val newInterval = newValue.toString().toLongOrNull()
+                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, DurationPreference.DEFAULT)
                 newInterval?.let {
                     if (newInterval != currentPollingInterval) {
                         lifecycleScope.launch {
@@ -54,7 +62,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                                 newInterval
                             )
                         }
-                        pollingInterval.summary = pollingIntervalSummary(newInterval)
+                        pollingInterval.summary = pollingIntervalSummary((newInterval / 60).toInt())
                     }
                 }
                 true
