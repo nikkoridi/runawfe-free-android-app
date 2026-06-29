@@ -17,22 +17,22 @@ class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() 
 
         timePicker = view.findViewById(R.id.durationPicker)
             ?: error("Can't find TimePicker in dialog with id ''")
-        val savedDurationMinutes = preference.duration
+        val savedDurationMinutes = preference.duration / 60
         val hours = savedDurationMinutes / 60
         val minutes = savedDurationMinutes % 60
         timePicker.apply {
             setIs24HourView(true) // TODO: It's designed to be a duration picker, am/pm format is questionable
-            hour = hours
-            minute = minutes
+            hour = hours.toInt()
+            minute = minutes.toInt()
         }
     }
 
     override fun onDialogClosed(positiveResult: Boolean) {
         if (positiveResult) {
-            val inputDurationMinutes = timePicker.hour * 60 + timePicker.minute
+            val durationSeconds = (timePicker.hour * 60 + timePicker.minute) * 60L
             preference.apply {
-                if (callChangeListener(inputDurationMinutes)) {
-                    duration = inputDurationMinutes
+                if (callChangeListener(durationSeconds)) {
+                    duration = durationSeconds
                 }
             }
         }

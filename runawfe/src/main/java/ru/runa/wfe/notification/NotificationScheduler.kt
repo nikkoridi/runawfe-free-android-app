@@ -29,7 +29,7 @@ object NotificationScheduler {
         .setRequiredNetworkType(NetworkType.CONNECTED)
         .setRequiresDeviceIdle(false)
         .build()
-    private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1_000
+    private var pollingInterval: Long =  DurationPreference.DEFAULT
     private var fastCheck: Boolean = false
 
     fun start(context: Context) {
@@ -38,9 +38,9 @@ object NotificationScheduler {
         CoroutineScope(Dispatchers.Default).launch {
             preferencesManager.getValueFlow(
                 PreferencesManager.POLLING_INTERVAL,
-                pollingInterval.toInt() / (1_000 * 60)
+                pollingInterval //
             ).collect { value ->
-                pollingInterval = (value * 1_000 * 60).toLong()
+                pollingInterval = value
                 /*
                 The value is nonzero initially (checked in MainActivity)
                 stopSelf() should be called only after service start
@@ -48,7 +48,7 @@ object NotificationScheduler {
                 if (pollingInterval == 0L) {
                     stop(context)
                 } else {
-                    fastCheck = true.takeIf { pollingInterval < 15 * 60 * 1_000 } ?: false
+                    fastCheck = true.takeIf { pollingInterval < 15 * 60 } ?: false
                     if (fastCheck) {
                         WorkManager.getInstance(context).cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK_NAME)
                     } else {
@@ -93,7 +93,7 @@ object NotificationScheduler {
         if (fastCheck) {
             val oneTimeRequest = OneTimeWorkRequestBuilder<NotificationWorker>()
                 .setInputData(workDataOf("fastCheck" to true))
-                .setInitialDelay(pollingInterval, TimeUnit.MILLISECONDS)
+                .setInitialDelay(pollingInterval, TimeUnit.SECONDS)
                 .setConstraints(constraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 // This will turn ForegroundService mode. It works only with OneTimeWorkRequest
