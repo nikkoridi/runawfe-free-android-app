@@ -21,6 +21,7 @@ import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 object NotificationScheduler {
+    const val NOTIFICATION_SERVICE_ID = 1
     private const val FAST_NOTIFICATION_CHECK_WORK = "fastNotificationCheck"
     private const val NORMAL_NOTIFICATION_CHECK_WORK = "normalNotificationCheck"
     private const val FLEX_INTERVAL: Long = 15 * 60 * 1_000
@@ -95,6 +96,8 @@ object NotificationScheduler {
                 .setInitialDelay(pollingInterval, TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                // This will turn ForegroundService mode. It works only with OneTimeWorkRequest
+                // .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
             workManager.enqueueUniqueWork(
                 FAST_NOTIFICATION_CHECK_WORK,
