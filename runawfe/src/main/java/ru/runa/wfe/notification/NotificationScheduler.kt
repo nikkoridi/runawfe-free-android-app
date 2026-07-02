@@ -26,6 +26,7 @@ object NotificationScheduler {
     private const val FLEX_INTERVAL: Long = 15 * 60 * 1_000
     private val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
+        .setRequiresDeviceIdle(false)
         .build()
     private var pollingInterval: Long = DurationPreference.DEFAULT.toLong() * 60 * 1_000
     private var fastCheck: Boolean = false
