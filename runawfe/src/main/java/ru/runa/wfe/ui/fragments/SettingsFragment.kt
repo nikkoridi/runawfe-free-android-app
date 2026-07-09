@@ -101,29 +101,21 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                 ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
             } else {
                 val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
-                when {
-                    // Don't block possibility to change url in case of bad network
-                    checkResult != ServerCheckResult.Invalid -> {
-                        preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-                    }
-
-                    checkResult is ServerCheckResult.Valid -> {
-                        ApiClient.setServerUrl(checkResult)
-                        preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
-                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
-                    }
-
-                    else -> {
-                        view?.let {
-                            Snackbar.make(
-                                it,
-                                if (checkResult is ServerCheckResult.Invalid)
-                                    R.string.invalid_url
-                                else R.string.network_error_url,
-                                30000
-                            )
-                                .show()
-                        }
+                if (checkResult is ServerCheckResult.Valid) {
+                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+                    ApiClient.setServerUrl(checkResult)
+                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
+                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                } else {
+                    view?.let {
+                        Snackbar.make(
+                            it,
+                            if (checkResult is ServerCheckResult.Invalid)
+                                R.string.invalid_url
+                            else R.string.network_error_url,
+                            Snackbar.LENGTH_SHORT
+                        )
+                            .show()
                     }
                 }
             }
