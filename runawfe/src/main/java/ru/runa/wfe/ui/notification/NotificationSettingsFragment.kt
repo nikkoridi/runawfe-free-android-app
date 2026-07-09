@@ -126,7 +126,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         val activity: MainActivity? = (activity as? MainActivity)
         activity?.requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
             if (isGranted) {
-                activity.startNotificationService()
+                activity.startNotifying()
                 showNotificationSettingsOreo(type)
             }
         }

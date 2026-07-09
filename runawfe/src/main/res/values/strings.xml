@@ -26,6 +26,7 @@
 
     <string name="notifications_service_title">Сервис уведомлений запущен</string>
     <string name="notifications_service_message">Уведомления RunaWFE о новых задачах и сообщениях</string>
+    <string name="stop_notification_service">Остановить</string>
 
     <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>

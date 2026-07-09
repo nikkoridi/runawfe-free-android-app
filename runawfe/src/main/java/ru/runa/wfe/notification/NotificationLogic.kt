@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.VisibleForTesting
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfChatRoom
@@ -16,32 +17,33 @@ import java.time.format.DateTimeFormatter
 
 class NotificationLogic(
     private val context: Context,
-    private val notificationHelpers: NotificationHelpers,
-    lastTasksCheckTime: OffsetDateTime = OffsetDateTime.now()
-) {
-    var lastTasksCheck: OffsetDateTime = lastTasksCheckTime
-        private set
+    private val notificationHelpers: NotificationHelpers) {
+
+    suspend fun collectNotificationData() {
+        if (NotificationHelpers.isChannelEnabled(NotificationType.TASK, context)) {
+            checkNewTasksAndNotify()
+        }
+        if (NotificationHelpers.isChannelEnabled(NotificationType.MESSAGE, context)) {
+            checkNewChatMessagesAndNotify()
+        }
+    }
 
     suspend fun checkNewChatMessagesAndNotify() {
-        try {
-            val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
-            if (!chatRooms.isNullOrEmpty()) {
-                for (room in chatRooms) {
-                    val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
-                    if (newMessagesCount == 0) continue
-                    val newMessages = checkNewMessages(room, newMessagesCount)
-                    if (!newMessages.isNullOrEmpty()) {
-                        val content = newChatMessagesNotificationContent(room.id, newMessages)
-                        notificationHelpers.showNotification(
-                            content.title,
-                            content.message,
-                            NotificationHelpers.NotificationType.MESSAGE
-                        )
-                    }
+        val chatRooms: List<WfChatRoom>? = ApiClient.chatService.getChatRoomsUsingGET().body()
+        if (!chatRooms.isNullOrEmpty()) {
+            for (room in chatRooms) {
+                val newMessagesCount = room.newMessagesCount?.toInt() ?: 0
+                if (newMessagesCount == 0) continue
+                val newMessages = checkNewMessages(room, newMessagesCount)
+                if (!newMessages.isNullOrEmpty()) {
+                    val content = newChatMessagesNotificationContent(room.id, newMessages)
+                    notificationHelpers.showNotification(
+                        content.title,
+                        content.message,
+                        NotificationType.MESSAGE
+                    )
                 }
             }
-        } catch (ex: Exception) {
-            Log.e(this::class.simpleName, ex.message.toString())
         }
     }
 
@@ -103,27 +105,23 @@ class NotificationLogic(
     }
 
     suspend fun checkNewTasksAndNotify() {
-        try {
-            val tasks: List<WfeTask>? = ApiClient.taskService.getMyTasksUsingPOST(
-                WfePagedListFilter()
-            ).body()?.data
+        val tasks: List<WfeTask>? = ApiClient.taskService.getMyTasksUsingPOST(
+            WfePagedListFilter()
+        ).body()?.data
 
-            val newTasks = checkNewTasks(tasks)
-            if (!newTasks.isNullOrEmpty()) {
-                val content = newTasksNotificationContent(newTasks)
-                notificationHelpers.showNotification(
-                    content.title, content.message,
-                    NotificationHelpers.NotificationType.TASK
-                )
-            }
-            lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
-            PreferencesManager.setKey(
-                context, PreferencesManager.LAST_CHECK,
-                lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        val newTasks = checkNewTasks(tasks)
+        if (!newTasks.isNullOrEmpty()) {
+            val content = newTasksNotificationContent(newTasks)
+            notificationHelpers.showNotification(
+                content.title, content.message,
+                NotificationType.TASK
             )
-        } catch (ex: Exception) {
-            Log.e(this::class.simpleName, ex.message.toString())
         }
+        lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
+        PreferencesManager.setKey(
+            context, PreferencesManager.LAST_CHECK,
+            lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        )
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -174,4 +172,8 @@ class NotificationLogic(
         val title: String,
         val message: String
     )
+
+    companion object {
+        var lastTasksCheck: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+    }
 }

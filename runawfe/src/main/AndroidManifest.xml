@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<manifest
-    android:hardwareAccelerated="true"
+<manifest android:hardwareAccelerated="true"
     android:versionCode="10001"
     android:versionName="1.0.1"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <supports-screens
         android:anyDensity="true"
@@ -40,8 +40,9 @@
         </activity>
 
         <service
-            android:name=".notification.NotificationService"
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="remoteMessaging"
-            android:exported="false" />
+            tools:node="merge" />
+
     </application>
 </manifest>
