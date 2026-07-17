@@ -38,7 +38,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
         val login = binding.login
         val password = binding.password
         val error = binding.errorMessage

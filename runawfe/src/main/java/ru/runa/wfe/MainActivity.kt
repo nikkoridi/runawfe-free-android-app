@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         // Are there no files in /data/data/{applicationId}? Then it's the very first app launch
         firstRun = this.filesDir.listFiles()?.isEmpty() ?: false
-        preferencesManager = PreferencesManager(this)
+        preferencesManager = PreferencesManager.getInstance(this)
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
                 as NavHostFragment

@@ -66,7 +66,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
-        preferencesManager = PreferencesManager(requireContext())
+        preferencesManager = PreferencesManager.getInstance(requireContext())
 
         // Set custom preference and it's summary
         val pollingInterval: DurationPreference? = findPreference("pollingInterval")

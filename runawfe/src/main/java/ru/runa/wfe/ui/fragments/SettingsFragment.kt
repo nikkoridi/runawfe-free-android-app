@@ -29,7 +29,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
         showUrlCheckbox = view.findViewById(R.id.showUrlCheckbox)
         changeURLView = view.findViewById(R.id.searchView)
         backButton = view.findViewById(R.id.backButton)
