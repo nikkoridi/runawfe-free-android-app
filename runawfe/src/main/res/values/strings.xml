@@ -11,6 +11,9 @@
     <string name="invalid_url">URL не является сервером RunaWFE или недействителен</string>
     <string name="network_error_url">Из-за проблем с интернетом URL не был проверен</string>
 
+    <string name="logo_description">Логотип RunaWFE</string>
+    <string name="loading">Загрузка…</string>
+
     <string name="title_activity_login">Вход</string>
     <string name="prompt_login">Логин</string>
     <string name="prompt_password">Пароль</string>

@@ -80,7 +80,8 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                     TokenManager.clearToken()
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
                 }
-                findNavController().navigate(R.id.login_to_main)
+                findNavController().popBackStack()
+                findNavController().navigate(R.id.mainFragment)
             } else {
                 if (loginResult.error != null) {
                     error.text = getString(loginResult.error)

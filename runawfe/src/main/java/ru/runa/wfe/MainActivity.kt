@@ -81,10 +81,9 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val wfURL = preferencesManager
                 .getValue(PreferencesManager.WEBVIEW_URL, "")
-
             if (wfURL.isEmpty()) {
                 navController.navigate(
-                    R.id.settingsFragment,
+                    R.id.start_to_settings,
                     null,
                     NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
                 )
@@ -95,9 +94,10 @@ class MainActivity : AppCompatActivity() {
                     val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                     if (tokenLoadSuccess) {
-                        navController.popBackStack() // Don't return to login form by pressing back
+                        navController.popBackStack() // Don't return to start fragment
                         navController.navigate(R.id.mainFragment)
                     } else {
+                        navController.navigate(R.id.start_to_login)
                         preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     }
                 }
