@@ -22,8 +22,13 @@ private const val PREFERENCES_NAME = "app_preferences"
 
 val Context.dataStore by preferencesDataStore(name = PREFERENCES_NAME)
 
-class PreferencesManager(private val context: Context) {
+class PreferencesManager private constructor(private val context: Context) {
     private val gson: Gson = GsonBuilder().create()
+    private val keystoreManager = KeyStoreManager(context)
+
+    init {
+        keystoreManager.initTinkConfig()
+    }
 
     suspend fun <T> setKey(key: Preferences.Key<T>, value: T) {
         context.dataStore.edit {
@@ -33,7 +38,6 @@ class PreferencesManager(private val context: Context) {
 
     suspend fun <T> hasKey(key: Preferences.Key<T>): Boolean =
         context.dataStore.data.first().contains(key)
-
 
     fun <T> getValueFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
         return context.dataStore.data
@@ -55,19 +59,24 @@ class PreferencesManager(private val context: Context) {
         return value
     }
 
-    @Throws(Exception::class)
     suspend fun <T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {
         val encryptedValue = context.dataStore.data.first()[key]
-        if (encryptedValue != null) {
-            return gson.fromJson(KeyStoreManager.decrypt(encryptedValue.toString()), type)
+        try {
+            return gson.fromJson(keystoreManager.decrypt(encryptedValue.toString()), type)
+        } catch (ex: Exception) {
+            Log.e(this.javaClass.simpleName, ex.message.toString())
         }
         return null
     }
 
     suspend fun setSecureKey(key: Preferences.Key<String>, value: String) {
         context.dataStore.edit {
-            val encryptedValue = KeyStoreManager.encrypt(value)
-            it[key] = encryptedValue
+            try {
+                val encryptedValue = keystoreManager.encrypt(value)
+                it[key] = encryptedValue
+            } catch (ex: Exception) {
+                Log.e(this.javaClass.simpleName, ex.message.toString())
+            }
         }
     }
 
@@ -92,14 +101,14 @@ class PreferencesManager(private val context: Context) {
         val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")
 
-        suspend fun <T> setKey(context: Context, key: Preferences.Key<T>, value: T) {
-            context.dataStore.edit {
-                it[key] = value
+        @Volatile
+        private var instance: PreferencesManager? = null
+        fun getInstance(context: Context): PreferencesManager {
+            return instance ?: synchronized(this) {
+                instance ?: PreferencesManager(context.applicationContext).also {
+                    instance = it
+                }
             }
-        }
-
-        suspend fun <T> getValue(context: Context, key: Preferences.Key<T>, defaultValue: T): T {
-            return context.dataStore.data.first()[key] ?: defaultValue
         }
     }
 }

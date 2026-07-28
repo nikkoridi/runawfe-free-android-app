@@ -118,8 +118,8 @@ class NotificationLogic(
             )
         }
         lastTasksCheck = OffsetDateTime.now(ZoneOffset.UTC)
-        PreferencesManager.setKey(
-            context, PreferencesManager.LAST_CHECK,
+        PreferencesManager.getInstance(context).setKey(
+            PreferencesManager.LAST_CHECK,
             lastTasksCheck.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         )
     }

@@ -33,7 +33,7 @@ object NotificationScheduler {
     private var fastCheck: Boolean = false
 
     fun start(context: Context) {
-        val preferencesManager = PreferencesManager(context)
+        val preferencesManager = PreferencesManager.getInstance(context)
         // DataStore uses Dispatchers.IO, this coroutine dispatcher won't change it
         CoroutineScope(Dispatchers.Default).launch {
             preferencesManager.getValueFlow(
@@ -79,7 +79,7 @@ object NotificationScheduler {
 
     fun stop(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
-            PreferencesManager(context).setKey(
+            PreferencesManager.getInstance(context).setKey(
                 PreferencesManager.LAST_CHECK,
                 NotificationLogic.lastTasksCheck.toString()
             )

@@ -1,15 +1,18 @@
 package ru.runa.wfe.data
 
+import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.util.Log
+import com.google.crypto.tink.Aead
+import com.google.crypto.tink.RegistryConfiguration
+import com.google.crypto.tink.aead.AeadConfig
+import com.google.crypto.tink.aead.AeadKeyTemplates
+import com.google.crypto.tink.integration.android.AndroidKeysetManager
+import com.google.crypto.tink.integration.android.AndroidKeystoreKmsClient
 import java.security.KeyStore
-import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
 
-object KeyStoreManager {
+class KeyStoreManager(context: Context) {
     private val keyStore by lazy {
         KeyStore.getInstance(PROVIDER).apply { load(null) }
     }
@@ -18,10 +21,25 @@ object KeyStoreManager {
         Charsets.UTF_8
     }
 
+    fun initTinkConfig() {
+        AeadConfig.register()
+    }
+
     private fun checkKey() {
+        AndroidKeystoreKmsClient.getOrGenerateNewAeadKey(MASTERKEY_URI)
         if (!keyStore.containsAlias(ALIAS)) {
             generateKey()
         }
+    }
+
+    private val aeadKeysetHandle by lazy {
+        AndroidKeysetManager.Builder()
+            .withSharedPref(context, "keyset", "keyset_preference")
+            .withKeyTemplate(AeadKeyTemplates.AES256_GCM)
+            .withMasterKeyUri(MASTERKEY_URI)
+            .build()
+            .keysetHandle
+            .getPrimitive(RegistryConfiguration.get(), Aead::class.java)
     }
 
     private fun generateKey() {
@@ -42,46 +60,22 @@ object KeyStoreManager {
         generator.generateKey()
     }
 
-    // TODO: Add exception handling
-    private fun getSecretKey(): SecretKey {
-        checkKey()
-        val key = (keyStore.getEntry(ALIAS, null) as KeyStore.SecretKeyEntry)
-            .secretKey
-        return key
-    }
-
     fun encrypt(data: String): String {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
-        val iv: ByteArray = cipher.iv
-        val ciphertext = cipher.doFinal(data.toByteArray(charset))
-        return android.util.Base64.encodeToString(
-            iv + ciphertext,
-            android.util.Base64.NO_WRAP
-        )
+        checkKey()
+        val ciphertext = aeadKeysetHandle.encrypt(data.toByteArray(charset), ByteArray(0))
+        return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
     }
 
     fun decrypt(data: String): String {
-        val base64Decoded = android.util.Base64.decode(data, android.util.Base64.NO_WRAP)
-        val iv = base64Decoded.take(IV_SIZE).toByteArray()
-        val textWithTag = base64Decoded.drop(IV_SIZE).toByteArray()
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        if (iv.size != IV_SIZE) {
-            Log.e(
-                this.javaClass.simpleName,
-                "Decrypt error: iv size should be $IV_SIZE, got ${iv.size}"
-            )
-        } else {
-            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_SIZE * 8, iv))
-            return cipher.doFinal(textWithTag).toString(charset)
-        }
-        return ""
+        checkKey()
+        val ciphertext = android.util.Base64.decode(data, android.util.Base64.NO_WRAP)
+        return aeadKeysetHandle.decrypt(ciphertext, ByteArray(0)).toString(charset)
     }
 
-    private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private const val PROVIDER = "AndroidKeyStore"
-    private const val KEY_SIZE = 256
-    private const val IV_SIZE = 12
-    private const val GCM_TAG_SIZE = 16
-    const val ALIAS = "secureKey"
+    companion object {
+        private const val PROVIDER = "AndroidKeyStore"
+        private const val KEY_SIZE = 256
+        const val ALIAS = "secureKey"
+        const val MASTERKEY_URI = "android-keystore://$ALIAS"
+    }
 }

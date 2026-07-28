@@ -49,7 +49,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
 
         val wfURL = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
