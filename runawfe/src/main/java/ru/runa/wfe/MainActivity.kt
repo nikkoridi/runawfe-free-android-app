@@ -29,7 +29,6 @@ import ru.runa.wfe.ui.notification.permissionsConstantsMap
 
 class MainActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
-    private lateinit var navController: NavController
     private var firstRun: Boolean = false
 
     private var permissionCallback: ((Boolean) -> Unit)? = null
@@ -50,40 +49,25 @@ class MainActivity : AppCompatActivity() {
         firstRun = this.filesDir.listFiles()?.isEmpty() ?: false
         preferencesManager = PreferencesManager(this)
 
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
-                as NavHostFragment
-        navController = navHostFragment.navController
-        navController.addOnDestinationChangedListener(
-            object : NavController.OnDestinationChangedListener {
-                override fun onDestinationChanged(
-                    controller: NavController,
-                    destination: NavDestination,
-                    arguments: SavedState?
-                ) {
-                    if (destination.id == R.id.mainFragment) {
-                        val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                        if (firstRun && sdkTiramisu) {
-                            requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
-                                if (isGranted) startNotifying()
-                            }
-                        } else {
-                            startNotifying()
-                        }
-                        controller.removeOnDestinationChangedListener(this)
-                    }
-                }
-            }
-        )
-        loadDataAndNavigate()
+        setNavigation()
     }
 
-    private fun loadDataAndNavigate() {
+    private fun setNavigation() {
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                    as NavHostFragment
+        val navController = navHostFragment.navController
+
+        // Conditional start screen
         lifecycleScope.launch {
             val wfURL = preferencesManager
                 .getValue(PreferencesManager.WEBVIEW_URL, "")
+
+            navController.popBackStack() // Don't return to start fragment
             if (wfURL.isEmpty()) {
+                navController.navigate(R.id.loginFragment)
                 navController.navigate(
-                    R.id.start_to_settings,
+                    R.id.login_to_settings,
                     null,
                     NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
                 )
@@ -94,18 +78,37 @@ class MainActivity : AppCompatActivity() {
                     val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                     if (tokenLoadSuccess) {
-                        navController.popBackStack() // Don't return to start fragment
                         navController.navigate(R.id.mainFragment)
                     } else {
-                        navController.navigate(R.id.start_to_login)
+                        navController.navigate(R.id.loginFragment)
                         preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     }
-                }
-                else {
-                    navController.popBackStack()
+                } else {
                     navController.navigate(R.id.mainFragment)
                 }
             }
+
+            navController.addOnDestinationChangedListener(
+                object : NavController.OnDestinationChangedListener {
+                    override fun onDestinationChanged(
+                        controller: NavController,
+                        destination: NavDestination,
+                        arguments: SavedState?
+                    ) {
+                        if (destination.id == R.id.mainFragment) {
+                            val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                            if (firstRun && sdkTiramisu) {
+                                requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
+                                    if (isGranted) startNotifying()
+                                }
+                            } else {
+                                startNotifying()
+                            }
+                            controller.removeOnDestinationChangedListener(this)
+                        }
+                    }
+                }
+            )
         }
     }
 
