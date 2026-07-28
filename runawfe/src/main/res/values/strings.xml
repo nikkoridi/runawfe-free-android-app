@@ -10,6 +10,7 @@
     <string name="update">Обновить</string>
     <string name="invalid_url">URL не является сервером RunaWFE или недействителен</string>
     <string name="network_error_url">Из-за проблем с интернетом URL не был проверен</string>
+    <string name="login_suggestion">Вход в аккаунт на сервере</string>
 
     <string name="logo_description">Логотип RunaWFE</string>
     <string name="loading">Загрузка…</string>

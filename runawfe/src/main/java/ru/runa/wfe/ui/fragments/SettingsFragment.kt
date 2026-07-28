@@ -10,6 +10,7 @@ import android.widget.LinearLayout
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
@@ -26,6 +27,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var changeURLView: SearchView
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
+    private var snackbarToLogin: Snackbar? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -69,6 +71,26 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         }
     }
 
+    override fun onDestroyView() {
+        snackbarToLogin?.dismiss()
+        snackbarToLogin = null
+        super.onDestroyView()
+    }
+
+    private fun loginScreenSuggest() {
+        view?.let {
+            snackbarToLogin = Snackbar.make(
+                it,
+                R.string.login_suggestion,
+                Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction(R.string.button_login) {
+                    findNavController().navigate(R.id.settings_to_login)
+                }
+            snackbarToLogin?.show()
+        }
+    }
+
     private fun saveShowUrl() {
         lifecycleScope.launch {
             preferencesManager.setKey(PreferencesManager.SHOW_URL, isShowUrl)
@@ -106,6 +128,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                     ApiClient.setServerUrl(checkResult)
                     preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    loginScreenSuggest()
                 } else {
                     view?.let {
                         Snackbar.make(
