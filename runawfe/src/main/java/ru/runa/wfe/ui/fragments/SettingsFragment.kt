@@ -8,6 +8,7 @@ import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SearchView
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -50,7 +51,20 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         backButton.setOnClickListener {
             savePreferences()
+            findNavController().navigateUp()
         }
+
+        requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(getViewLifecycleOwner(),
+                object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        savePreferences()
+                        isEnabled = false
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            )
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
             isShowUrl = isChecked
@@ -116,7 +130,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             return
         }
         val originChangeUrl = ApiClient.toOrigin(changeUrl)
-        val isUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(ApiClient.baseUrl)
+        val isUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(oldUrl)
         lifecycleScope.launch {
             if (isUrlHostsEqual) {
                 preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
