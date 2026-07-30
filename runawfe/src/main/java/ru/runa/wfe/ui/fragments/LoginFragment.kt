@@ -75,7 +75,10 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
             if (loginResult.success) {
                 saveToken()
                 findNavController().popBackStack()
-                findNavController().navigate(R.id.mainFragment)
+                val credentialsBundle = Bundle()
+                credentialsBundle.putString("login", loginValue)
+                credentialsBundle.putString("password", passwordValue)
+                findNavController().navigate(R.id.mainFragment, credentialsBundle)
             } else {
                 if (loginResult.error != null) {
                     error.text = getString(loginResult.error)

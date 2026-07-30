@@ -34,6 +34,7 @@ import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.rest.ApiClient
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
@@ -195,7 +196,16 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         settings.builtInZoomControls = true
-        webView.loadUrl(wfURL)
+
+        val arguments = arguments
+        if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
+            webView.loadUrl(ApiClient.toOrigin(wfURL)+"/wfe/login.do?login=${arguments.getString("login")}&password=${arguments.getString("password")}")
+            arguments.remove("login")
+            arguments.remove("password")
+            webView.clearHistory()
+        } else {
+            webView.loadUrl(wfURL)
+        }
     }
 
     private fun toggleUrlVisibility(isVisible: Boolean) {
