@@ -9,11 +9,8 @@ import ru.runa.wfe.ui.login.LoginResult
 import java.time.Instant
 
 object TokenManager {
-    private var token: String = ""
-
-    fun getToken(): String {
-        return token
-    }
+    var token: String = ""
+        private set
 
     fun clearToken() {
         token = ""
@@ -39,7 +36,7 @@ object TokenManager {
         return false
     }
 
-    private fun checkToken(token: String = getToken()): Boolean {
+    private fun checkToken(token: String = this.token): Boolean {
         if (token.isNotEmpty()) {
             val payload = getTokenPayloadString(token)
             return (payload.isNotBlank() || payload.isNotEmpty())

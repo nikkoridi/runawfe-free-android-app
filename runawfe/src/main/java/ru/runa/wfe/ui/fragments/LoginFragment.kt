@@ -90,7 +90,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         requireActivity().lifecycleScope.launch(Dispatchers.IO) {
             preferencesManager.setSecureKey(
                 PreferencesManager.TOKEN,
-                TokenManager.getToken()
+                TokenManager.token
             )
             TokenManager.clearToken()
             preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
