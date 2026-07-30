@@ -23,6 +23,7 @@ class KeyStoreManager(context: Context) {
 
     fun initTinkConfig() {
         AeadConfig.register()
+        checkKey()
     }
 
     private fun checkKey() {
@@ -61,13 +62,11 @@ class KeyStoreManager(context: Context) {
     }
 
     fun encrypt(data: String): String {
-        checkKey()
         val ciphertext = aeadKeysetHandle.encrypt(data.toByteArray(charset), ByteArray(0))
         return android.util.Base64.encodeToString(ciphertext, android.util.Base64.NO_WRAP)
     }
 
     fun decrypt(data: String): String {
-        checkKey()
         val ciphertext = android.util.Base64.decode(data, android.util.Base64.NO_WRAP)
         return aeadKeysetHandle.decrypt(ciphertext, ByteArray(0)).toString(charset)
     }

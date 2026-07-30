@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.data.PreferencesManager
@@ -72,14 +73,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         val passwordValue = password.text.toString().trim()
         loginViewModel.login(loginValue, passwordValue) { loginResult ->
             if (loginResult.success) {
-                lifecycleScope.launch {
-                    preferencesManager.setSecureKey(
-                        PreferencesManager.TOKEN,
-                        TokenManager.getToken()
-                    )
-                    TokenManager.clearToken()
-                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
-                }
+                saveToken()
                 findNavController().popBackStack()
                 findNavController().navigate(R.id.mainFragment)
             } else {
@@ -89,6 +83,17 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                     error.text = getString(R.string.auth_error)
                 }
             }
+        }
+    }
+
+    private fun saveToken() {
+        requireActivity().lifecycleScope.launch(Dispatchers.IO) {
+            preferencesManager.setSecureKey(
+                PreferencesManager.TOKEN,
+                TokenManager.getToken()
+            )
+            TokenManager.clearToken()
+            preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
         }
     }
 
