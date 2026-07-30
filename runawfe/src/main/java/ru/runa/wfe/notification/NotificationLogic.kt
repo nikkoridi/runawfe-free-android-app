@@ -7,6 +7,7 @@ import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.rest.ApiClient
+import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListFilter
@@ -60,7 +61,14 @@ class NotificationLogic(
             if (chatRoomMessages.isNullOrEmpty() || newMessagesCount > chatRoomMessages.size) {
                 return null
             }
-            return chatRoomMessages.subList(0, newMessagesCount)
+            val newMessages = ArrayList<MessageAddedBroadcast>()
+            for (i in 0 until newMessagesCount) {
+                val message = chatRoomMessages[i]
+                if (message.author?.name != TokenManager.sub) {
+                    newMessages.add(message)
+                }
+            }
+            return newMessages
         } catch (ex: Exception) {
             Log.e(this::class.simpleName, ex.message.toString())
             return null

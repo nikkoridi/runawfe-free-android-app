@@ -11,9 +11,12 @@ import java.time.Instant
 object TokenManager {
     var token: String = ""
         private set
+    var sub: String = "" // Username
+        private set
 
     fun clearToken() {
         token = ""
+        sub = ""
     }
 
     private fun getTokenPayloadString(token: String): String {
@@ -23,13 +26,14 @@ object TokenManager {
         return ""
     }
 
-    private fun checkExpiration(payload: String): Boolean {
+    private fun checkExpirationAndSetSub(payload: String): Boolean {
         val jsonPayload = JsonParser.parseString(payload).asJsonObject
         val expiration = jsonPayload.get("exp")
         if (expiration != null) {
             val currentTime = Instant.now().epochSecond
             val expirationTime = expiration.toString().toLongOrNull()
             if (expirationTime != null && expirationTime > currentTime) {
+                jsonPayload.get("sub")?.let { sub = it.asString }
                 return true
             }
         }
@@ -40,7 +44,7 @@ object TokenManager {
         if (token.isNotEmpty()) {
             val payload = getTokenPayloadString(token)
             return (payload.isNotBlank() || payload.isNotEmpty())
-                    && checkExpiration(payload)
+                    && checkExpirationAndSetSub(payload)
         }
         return false
     }
