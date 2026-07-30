@@ -27,7 +27,7 @@ object TokenManager {
     }
 
     private fun checkExpiration(payload: String): Boolean {
-        val jsonPayload = JsonParser().parse(payload).asJsonObject
+        val jsonPayload = JsonParser.parseString(payload).asJsonObject
         val expiration = jsonPayload.get("exp")
         if (expiration != null) {
             val currentTime = Instant.now().epochSecond
