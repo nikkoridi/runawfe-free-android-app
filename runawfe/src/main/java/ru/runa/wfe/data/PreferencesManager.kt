@@ -2,6 +2,7 @@ package ru.runa.wfe.data
 
 import android.content.Context
 import android.util.Log
+import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -19,8 +20,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 
 private const val PREFERENCES_NAME = "app_preferences"
+private const val PREFERENCES_SUFFIX = "_preferences"
 
-val Context.dataStore by preferencesDataStore(name = PREFERENCES_NAME)
+val Context.dataStore by preferencesDataStore(
+    name = PREFERENCES_NAME,
+    produceMigrations = { context ->
+        listOf(SharedPreferencesMigration(context, context.packageName+PREFERENCES_SUFFIX))
+    }
+)
 
 class PreferencesManager private constructor(private val context: Context) {
     private val gson: Gson = GsonBuilder().create()
