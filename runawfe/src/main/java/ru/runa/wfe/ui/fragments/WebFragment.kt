@@ -75,6 +75,20 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             findNavController().navigate(R.id.to_settings)
         }
 
+        // Handle WebView back navigation
+        backPressedCallback = requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(this) {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    this.isEnabled = false
+                    // Callback toggle doesn't enable native behaviour in the line above
+                    // Call it directly
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+
         webView.webViewClient = object : WebViewClient() {
             @SuppressLint("WebViewClientOnReceivedSslError", "ObsoleteSdkInt")
             override fun onReceivedSslError(
@@ -103,6 +117,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
                     emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
                 }
 
+            }
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                backPressedCallback.isEnabled = webView.canGoBack()
             }
         }
         webView.setDownloadListener { url, userAgent, contentDisposition, mimeType, contentLength ->
@@ -167,21 +185,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
-        // Handle WebView back navigation
-        backPressedCallback = requireActivity()
-            .onBackPressedDispatcher
-            .addCallback(this) {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    this.isEnabled = false
-                    // Callback toggle doesn't enable native behaviour in the line above
-                    // Call it directly
-                    requireActivity().onBackPressedDispatcher.onBackPressed()
-                }
-            }
-        webViewHistoryBackPressedCallback(webView, backPressedCallback)
-
         val isShowUrl = preferencesManager
             .getValue(PreferencesManager.SHOW_URL, false)
         toggleUrlVisibility(isShowUrl)
@@ -208,16 +211,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             layoutParams.removeRule(RelativeLayout.BELOW)
             settingButtonLayoutParams.topMargin = 0
             settingsButton.layoutParams = settingButtonLayoutParams
-        }
-    }
-
-    private fun webViewHistoryBackPressedCallback(webView: WebView,
-                                                  onBackPressedCallback: OnBackPressedCallback) {
-        webView.webViewClient = object : WebViewClient() {
-            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
-                super.doUpdateVisitedHistory(view, url, isReload)
-                onBackPressedCallback.isEnabled = webView.canGoBack()
-            }
         }
     }
 }
