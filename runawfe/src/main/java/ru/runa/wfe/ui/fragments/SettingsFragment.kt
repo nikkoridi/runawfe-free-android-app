@@ -140,7 +140,6 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                 if (checkResult is ServerCheckResult.Valid) {
                     preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
                     ApiClient.setServerUrl(checkResult)
-                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     loginScreenSuggest()
                 } else {

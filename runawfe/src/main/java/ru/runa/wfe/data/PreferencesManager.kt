@@ -97,7 +97,6 @@ class PreferencesManager private constructor(private val context: Context) {
         val LAST_VERSION = stringPreferencesKey("last_version")
         val SHOW_URL = booleanPreferencesKey("showUrl")
         val POLLING_INTERVAL = intPreferencesKey("pollingInterval")
-        val IS_LOGGED = booleanPreferencesKey("isLogged")
         val LAST_CHECK = stringPreferencesKey("lastCheck")
         val TOKEN = stringPreferencesKey("token")
 

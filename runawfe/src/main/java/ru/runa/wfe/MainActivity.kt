@@ -76,7 +76,6 @@ class MainActivity : AppCompatActivity() {
                 if (checkServerUrlResult is ServerCheckResult.Valid) {
                     ApiClient.setServerUrl(checkServerUrlResult)
                     val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
-                    preferencesManager.setKey(PreferencesManager.IS_LOGGED, tokenLoadSuccess)
                     if (tokenLoadSuccess) {
                         navController.navigate(R.id.mainFragment)
                     } else {

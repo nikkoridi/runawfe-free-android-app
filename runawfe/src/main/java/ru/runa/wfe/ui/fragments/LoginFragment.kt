@@ -93,7 +93,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                 TokenManager.token
             )
             TokenManager.clearToken()
-            preferencesManager.setKey(PreferencesManager.IS_LOGGED, true)
         }
     }
 
