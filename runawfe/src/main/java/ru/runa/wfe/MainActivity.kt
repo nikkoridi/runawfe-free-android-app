@@ -3,6 +3,7 @@ package ru.runa.wfe
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -25,7 +26,6 @@ import ru.runa.wfe.notification.NotificationScheduler
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
-import ru.runa.wfe.ui.notification.permissionsConstantsMap
 
 class MainActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
@@ -98,7 +98,10 @@ class MainActivity : AppCompatActivity() {
                         if (destination.id == R.id.mainFragment) {
                             val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                             if (firstRun && sdkTiramisu) {
-                                requestPermission(Manifest.permission.POST_NOTIFICATIONS) { isGranted ->
+                                requestPermission(
+                                    Manifest.permission.POST_NOTIFICATIONS,
+                                    R.string.permission_notification_need
+                                ) { isGranted ->
                                     if (isGranted) startNotifying()
                                 }
                             } else {
@@ -132,25 +135,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun requestPermission(permission: String, callback: ((Boolean) -> Unit)?) {
+    fun requestPermission(permission: String, explanation: Int?, callback: ((Boolean) -> Unit)?) {
         // Create custom dialog with explanations
         val explainDialogBuilder = AlertDialog.Builder(this)
             .setTitle(R.string.permission_request_title)
-            .setMessage(permissionsConstantsMap[permission]?.explanation ?: R.string.permission_need)
+            .setMessage(explanation ?: R.string.permission_need)
             .setNeutralButton(R.string.refuse_action, null)
         if (ContextCompat.checkSelfPermission(this, permission) !=
             PackageManager.PERMISSION_GRANTED
         ) {
             if (firstRun || ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-                permissionCallback = callback
+                // Explain and ask permission
+                callback.let { permissionCallback = it }
                 explainDialogBuilder
                     .setPositiveButton(R.string.permission_set) { _, _ ->
                         requestPermissionLauncher.launch(permission)
                     }
                     .create().show()
             } else {
+                /*
+                * If the user denied the permission, the system dialog won't appear
+                * Direct user to the app's settings
+                * */
                 intentCallback = {
-                    // Because Android Settings app has no informative result, check the permission state again
+                    // Because Android Settings app returns no informative result, re-check the permission state and send to the callback
                     callback?.invoke(
                         ContextCompat.checkSelfPermission(
                             this,
@@ -158,11 +166,19 @@ class MainActivity : AppCompatActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
                     )
                 }
+                val intent = when (permission) {
+                    Manifest.permission.POST_NOTIFICATIONS -> {
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, this.packageName)
+                    }
+
+                    else -> {
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.fromParts("package", this.packageName, null))
+                    }
+                }
                 explainDialogBuilder
                     .setPositiveButton(R.string.permission_set) { _, _ ->
-                        val intent = Intent()
-                            .setAction(permissionsConstantsMap[permission]?.settingsPage)
-                            .putExtra(Settings.EXTRA_APP_PACKAGE, this.packageName)
                         intentLauncher.launch(intent)
                     }
                     .create().show()
