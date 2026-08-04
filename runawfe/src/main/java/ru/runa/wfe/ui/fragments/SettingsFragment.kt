@@ -11,6 +11,7 @@ import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -29,6 +30,8 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
     private var snackbarToLogin: Snackbar? = null
+    private lateinit var previousUrl: String
+    private var newServerUrlSet = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -40,6 +43,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         val wfurl = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
         changeURLView.setQuery(wfurl, true)
+        previousUrl = wfurl
 
         isShowUrl = preferencesManager
             .getValue(PreferencesManager.SHOW_URL, false)
@@ -51,7 +55,15 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         backButton.setOnClickListener {
             savePreferences()
-            findNavController().navigateUp()
+            if (!newServerUrlSet) {
+                findNavController().navigateUp()
+            } else {
+                findNavController().navigate(
+                    R.id.settings_to_login,
+                    null,
+                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                )
+            }
         }
 
         requireActivity()
@@ -61,7 +73,15 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                     override fun handleOnBackPressed() {
                         savePreferences()
                         isEnabled = false
-                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                        if (!newServerUrlSet) {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        } else {
+                            findNavController().navigate(
+                                R.id.settings_to_login,
+                                null,
+                                NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                            )
+                        }
                     }
                 }
             )
@@ -125,21 +145,23 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
             return
         }
-        val oldUrl = preferencesManager.getValue(PreferencesManager.WEBVIEW_URL, "")
-        if (changeUrl == oldUrl) {
+        if (changeUrl == previousUrl) {
             return
         }
         val originChangeUrl = ApiClient.toOrigin(changeUrl)
-        val isUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(oldUrl)
+        val areUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(previousUrl)
         lifecycleScope.launch {
-            if (isUrlHostsEqual) {
+            if (areUrlHostsEqual) {
                 preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
                 ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
+                previousUrl = changeUrl
             } else {
                 val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
                 if (checkResult is ServerCheckResult.Valid) {
                     preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
                     ApiClient.setServerUrl(checkResult)
+                    previousUrl = changeUrl
+                    newServerUrlSet = true
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     loginScreenSuggest()
                 } else {
