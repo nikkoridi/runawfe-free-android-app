@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -15,9 +16,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
-import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
 import androidx.savedstate.SavedState
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers
@@ -30,6 +31,7 @@ import ru.runa.wfe.rest.ServerCheckResult
 class MainActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
     private var firstRun: Boolean = false
+    private lateinit var rootView: View
 
     private var permissionCallback: ((Boolean) -> Unit)? = null
     private val requestPermissionLauncher =
@@ -45,10 +47,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        rootView = findViewById(android.R.id.content)
         // Are there no files in /data/data/{applicationId}? Then it's the very first app launch
         firstRun = this.filesDir.listFiles()?.isEmpty() ?: false
         preferencesManager = PreferencesManager.getInstance(this)
-
         setNavigation()
     }
 
@@ -65,12 +67,7 @@ class MainActivity : AppCompatActivity() {
 
             navController.popBackStack() // Don't return to start fragment
             if (wfURL.isEmpty()) {
-                navController.navigate(R.id.loginFragment)
-                navController.navigate(
-                    R.id.login_to_settings,
-                    null,
-                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
-                )
+                showEmptyURLDialogFragment()
             } else {
                 val checkServerUrlResult = ApiClient.checkServer(wfURL)
                 if (checkServerUrlResult is ServerCheckResult.Valid) {
@@ -83,7 +80,8 @@ class MainActivity : AppCompatActivity() {
                         preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     }
                 } else {
-                    navController.navigate(R.id.mainFragment)
+                    Snackbar.make(rootView, R.string.invalid_url, Snackbar.LENGTH_SHORT).show()
+                    navController.navigate(R.id.settingsFragment)
                 }
             }
 
@@ -112,6 +110,12 @@ class MainActivity : AppCompatActivity() {
                 }
             )
         }
+    }
+
+    fun showEmptyURLDialogFragment() {
+        val emptyURLDialogFragment = EmptyURLDialogFragment()
+        emptyURLDialogFragment.activityOfMessage = this
+        emptyURLDialogFragment.show(supportFragmentManager, "emptyURLDialog")
     }
 
     private fun canStartNotification(): Boolean {
