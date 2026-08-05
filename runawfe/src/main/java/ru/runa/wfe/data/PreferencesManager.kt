@@ -33,10 +33,6 @@ class PreferencesManager private constructor(private val context: Context) {
     private val gson: Gson = GsonBuilder().create()
     private val keystoreManager = KeyStoreManager(context)
 
-    init {
-        keystoreManager.initTinkConfig()
-    }
-
     suspend fun <T> setKey(key: Preferences.Key<T>, value: T) {
         context.dataStore.edit {
             it[key] = value
