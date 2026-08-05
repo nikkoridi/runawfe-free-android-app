@@ -16,8 +16,8 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
-import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
@@ -79,7 +79,8 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                             findNavController().navigate(
                                 R.id.settings_to_login,
                                 null,
-                                NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                                NavOptions.Builder()
+                                    .setPopUpTo(R.id.loginFragment, inclusive = false).build()
                             )
                         }
                     }

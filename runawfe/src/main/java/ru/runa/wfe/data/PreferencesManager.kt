@@ -25,7 +25,7 @@ private const val PREFERENCES_SUFFIX = "_preferences"
 val Context.dataStore by preferencesDataStore(
     name = PREFERENCES_NAME,
     produceMigrations = { context ->
-        listOf(SharedPreferencesMigration(context, context.packageName+PREFERENCES_SUFFIX))
+        listOf(SharedPreferencesMigration(context, context.packageName + PREFERENCES_SUFFIX))
     }
 )
 
@@ -63,8 +63,8 @@ class PreferencesManager private constructor(private val context: Context) {
     }
 
     suspend fun <T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {
-        val encryptedValue = context.dataStore.data.first()[key]
         try {
+            val encryptedValue = context.dataStore.data.first()[key]
             return gson.fromJson(keystoreManager.decrypt(encryptedValue.toString()), type)
         } catch (ex: Exception) {
             Log.e(this.javaClass.simpleName, ex.message.toString())

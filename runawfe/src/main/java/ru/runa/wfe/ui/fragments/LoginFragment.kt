@@ -13,18 +13,17 @@ import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
-import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.databinding.LoginFragmentBinding
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.ui.login.LoginViewModel
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
-    private lateinit var preferencesManager: PreferencesManager
-
-    private val loginViewModel: LoginViewModel by viewModels()
     private var _binding: LoginFragmentBinding? = null
     private val binding get() = _binding!!
+    private val loginViewModel: LoginViewModel by viewModels()
+    private lateinit var preferencesManager: PreferencesManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,10 +31,8 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         savedInstanceState: Bundle?
     ): View {
         _binding = LoginFragmentBinding.inflate(inflater, container, false)
-
         return binding.root
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +41,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         val password = binding.password
         val error = binding.errorMessage
         val loginButton = binding.loginButton
-
         val settingsButton = binding.settingsButton
 
         loginButton.setOnClickListener {
@@ -54,7 +50,11 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         settingsButton.setOnClickListener {
             findNavController().navigate(R.id.login_to_settings)
         }
+    }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     private fun loginHandler(
@@ -97,10 +97,5 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
             )
             TokenManager.clearToken()
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

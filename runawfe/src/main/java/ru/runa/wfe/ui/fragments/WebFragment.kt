@@ -58,6 +58,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
+
         val lastVersion = preferencesManager
             .getValue(PreferencesManager.LAST_VERSION, "").toString()
         val currentVersion: String = BuildConfig.VERSION_NAME
@@ -199,7 +200,12 @@ class WebFragment : Fragment(R.layout.web_fragment) {
 
         val arguments = arguments
         if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
-            webView.loadUrl(ApiClient.toOrigin(wfURL)+"/wfe/login.do?login=${arguments.getString("login")}&password=${arguments.getString("password")}")
+            val host = ApiClient.toOrigin(wfURL)
+            if (host.isNotEmpty()) {
+                webView.loadUrl(
+                    "${host}/wfe/login.do?login=${arguments.getString("login")}&password=${arguments.getString("password")}"
+                )
+            }
             arguments.remove("login")
             arguments.remove("password")
             webView.clearHistory()
