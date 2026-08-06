@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,7 +79,12 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
                 val credentialsBundle = Bundle()
                 credentialsBundle.putString("login", loginValue)
                 credentialsBundle.putString("password", passwordValue)
-                findNavController().navigate(R.id.mainFragment, credentialsBundle)
+                // Currently, login screen always appears after settings screen (which this line pops from the backstack)
+                findNavController().navigate(
+                    R.id.mainFragment,
+                    credentialsBundle,
+                    NavOptions.Builder().setPopUpTo(R.id.settingsFragment, inclusive = true).build()
+                )
             } else {
                 if (loginResult.error != null) {
                     error.text = getString(loginResult.error)
