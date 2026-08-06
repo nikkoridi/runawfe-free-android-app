@@ -8,13 +8,16 @@ import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SearchView
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import ru.runa.wfe.EmptyURLDialogFragment
-import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
@@ -26,10 +29,13 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var changeURLView: SearchView
     private lateinit var backButton: ImageButton
     private var isShowUrl: Boolean = false
+    private var snackbarToLogin: Snackbar? = null
+    private lateinit var previousUrl: String
+    private var newServerUrlSet = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
         showUrlCheckbox = view.findViewById(R.id.showUrlCheckbox)
         changeURLView = view.findViewById(R.id.searchView)
         backButton = view.findViewById(R.id.backButton)
@@ -37,6 +43,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         val wfurl = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
         changeURLView.setQuery(wfurl, true)
+        previousUrl = wfurl
 
         isShowUrl = preferencesManager
             .getValue(PreferencesManager.SHOW_URL, false)
@@ -48,7 +55,37 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         backButton.setOnClickListener {
             savePreferences()
+            if (!newServerUrlSet) {
+                findNavController().navigateUp()
+            } else {
+                findNavController().navigate(
+                    R.id.settings_to_login,
+                    null,
+                    NavOptions.Builder().setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                )
+            }
         }
+
+        requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(getViewLifecycleOwner(),
+                object : OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        savePreferences()
+                        isEnabled = false
+                        if (!newServerUrlSet) {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        } else {
+                            findNavController().navigate(
+                                R.id.settings_to_login,
+                                null,
+                                NavOptions.Builder()
+                                    .setPopUpTo(R.id.loginFragment, inclusive = false).build()
+                            )
+                        }
+                    }
+                }
+            )
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
             isShowUrl = isChecked
@@ -66,6 +103,26 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                 .beginTransaction()
                 .replace(R.id.notificationSettingsContainer, NotificationSettingsFragment())
                 .commit()
+        }
+    }
+
+    override fun onDestroyView() {
+        snackbarToLogin?.dismiss()
+        snackbarToLogin = null
+        super.onDestroyView()
+    }
+
+    private fun loginScreenSuggest() {
+        view?.let {
+            snackbarToLogin = Snackbar.make(
+                it,
+                R.string.login_suggestion,
+                Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction(R.string.button_login) {
+                    findNavController().navigate(R.id.settings_to_login)
+                }
+            snackbarToLogin?.show()
         }
     }
 
@@ -89,41 +146,35 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
             emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
             return
         }
-        val oldUrl = preferencesManager.getValue(PreferencesManager.WEBVIEW_URL, "")
-        if (changeUrl == oldUrl) {
+        if (changeUrl == previousUrl) {
             return
         }
         val originChangeUrl = ApiClient.toOrigin(changeUrl)
-        val isUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(ApiClient.baseUrl)
+        val areUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(previousUrl)
         lifecycleScope.launch {
-            if (isUrlHostsEqual) {
+            if (areUrlHostsEqual) {
                 preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
                 ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
+                previousUrl = changeUrl
             } else {
                 val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
-                when {
-                    // Don't block possibility to change url in case of bad network
-                    checkResult != ServerCheckResult.Invalid -> {
-                        preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-                    }
-
-                    checkResult is ServerCheckResult.Valid -> {
-                        ApiClient.setServerUrl(checkResult)
-                        preferencesManager.setKey(PreferencesManager.IS_LOGGED, false)
-                        preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
-                    }
-
-                    else -> {
-                        view?.let {
-                            Snackbar.make(
-                                it,
-                                if (checkResult is ServerCheckResult.Invalid)
-                                    R.string.invalid_url
-                                else R.string.network_error_url,
-                                30000
-                            )
-                                .show()
-                        }
+                if (checkResult is ServerCheckResult.Valid) {
+                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+                    ApiClient.setServerUrl(checkResult)
+                    previousUrl = changeUrl
+                    newServerUrlSet = true
+                    preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
+                    loginScreenSuggest()
+                } else {
+                    view?.let {
+                        Snackbar.make(
+                            it,
+                            if (checkResult is ServerCheckResult.Invalid)
+                                R.string.invalid_url
+                            else R.string.network_error_url,
+                            Snackbar.LENGTH_SHORT
+                        )
+                            .show()
                     }
                 }
             }
