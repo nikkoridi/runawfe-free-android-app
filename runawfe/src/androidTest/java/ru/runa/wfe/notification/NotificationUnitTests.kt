@@ -7,7 +7,8 @@ import org.junit.runners.Suite.SuiteClasses
 
 @RunWith(Suite::class)
 @SuiteClasses(
-    NotificationServiceTest::class,
+    NotificationWorkerTest::class,
+    NotificationSchedulerTest::class,
     NotificationHelpersTest::class,
     NotificationLogicTest::class,
     NotificationLogicApiDataTest::class,

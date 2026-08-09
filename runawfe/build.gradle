@@ -113,5 +113,6 @@ dependencies {
     androidTestImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2'
     androidTestImplementation 'io.mockk:mockk-android:1.13.14'
     androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+    androidTestImplementation 'androidx.work:work-testing:2.11.2'
 
 }
