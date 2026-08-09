@@ -22,8 +22,8 @@ import java.util.concurrent.TimeUnit
 
 object NotificationScheduler {
     const val NOTIFICATION_SERVICE_ID = 1
-    private const val FAST_NOTIFICATION_CHECK_WORK = "fastNotificationCheck"
-    private const val NORMAL_NOTIFICATION_CHECK_WORK = "normalNotificationCheck"
+    const val FAST_NOTIFICATION_CHECK_WORK_NAME = "fastNotificationCheck"
+    const val NORMAL_NOTIFICATION_CHECK_WORK_NAME = "normalNotificationCheck"
     private const val FLEX_INTERVAL: Long = 15 * 60 * 1_000
     private val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -50,9 +50,9 @@ object NotificationScheduler {
                 } else {
                     fastCheck = true.takeIf { pollingInterval < 15 * 60 * 1_000 } ?: false
                     if (fastCheck) {
-                        WorkManager.getInstance(context).cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK)
+                        WorkManager.getInstance(context).cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK_NAME)
                     } else {
-                        WorkManager.getInstance(context).cancelUniqueWork(FAST_NOTIFICATION_CHECK_WORK)
+                        WorkManager.getInstance(context).cancelUniqueWork(FAST_NOTIFICATION_CHECK_WORK_NAME)
                     }
                     scheduleNext(context)
                 }
@@ -73,7 +73,7 @@ object NotificationScheduler {
 
     private fun stopWorks(context: Context) {
        WorkManager.getInstance(context).cancelUniqueWork(
-           if (fastCheck) FAST_NOTIFICATION_CHECK_WORK else NORMAL_NOTIFICATION_CHECK_WORK
+           if (fastCheck) FAST_NOTIFICATION_CHECK_WORK_NAME else NORMAL_NOTIFICATION_CHECK_WORK_NAME
        )
     }
 
@@ -100,7 +100,7 @@ object NotificationScheduler {
                 // .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
             workManager.enqueueUniqueWork(
-                FAST_NOTIFICATION_CHECK_WORK,
+                FAST_NOTIFICATION_CHECK_WORK_NAME,
                 ExistingWorkPolicy.REPLACE,
                 oneTimeRequest
             )
@@ -115,7 +115,7 @@ object NotificationScheduler {
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
                 .build()
             workManager.enqueueUniquePeriodicWork(
-                NORMAL_NOTIFICATION_CHECK_WORK,
+                NORMAL_NOTIFICATION_CHECK_WORK_NAME,
                 ExistingPeriodicWorkPolicy.UPDATE,
                 periodicRequest
             )
