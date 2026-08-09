@@ -20,7 +20,6 @@ import ru.runa.wfe.restapi.client.TaskControllerApi
 import ru.runa.wfe.restapi.model.MessageAddedBroadcast
 import ru.runa.wfe.restapi.model.WfChatRoom
 import ru.runa.wfe.restapi.model.WfePagedListOfWfeTask
-import java.time.OffsetDateTime
 
 class NotificationLogicApiDataTest {
     @MockK
@@ -41,8 +40,7 @@ class NotificationLogicApiDataTest {
         mockkObject(ApiClient)
         context = ApplicationProvider.getApplicationContext()
         resources = context.resources
-        notificationLogic =
-            NotificationLogic(context, notificationHelpers, OffsetDateTime.now().minusMinutes(3))
+        notificationLogic = NotificationLogic(context, notificationHelpers)
     }
 
     @After
