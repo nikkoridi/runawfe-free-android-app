@@ -10,6 +10,10 @@
     <string name="update">Обновить</string>
     <string name="invalid_url">URL не является сервером RunaWFE или недействителен</string>
     <string name="network_error_url">Из-за проблем с интернетом URL не был проверен</string>
+    <string name="login_suggestion">Вход в аккаунт на сервере</string>
+
+    <string name="logo_description">Логотип RunaWFE</string>
+    <string name="loading">Загрузка…</string>
 
     <string name="title_activity_login">Вход</string>
     <string name="prompt_login">Логин</string>
@@ -26,6 +30,7 @@
 
     <string name="notifications_service_title">Сервис уведомлений запущен</string>
     <string name="notifications_service_message">Уведомления RunaWFE о новых задачах и сообщениях</string>
+    <string name="stop_notification_service">Остановить</string>
 
     <string name="tasks_channel_description">Уведомления RunaWFE о новых задачах</string>
     <string name="messages_channel_description">Уведомления RunaWFE о новых сообщениях</string>

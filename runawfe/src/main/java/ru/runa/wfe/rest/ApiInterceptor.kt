@@ -8,7 +8,7 @@ class ApiInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val modifiedRequest = chain.request().newBuilder()
             .addHeader("Content-Type", "application/json")
-            .addHeader("Authorization", "Bearer ${TokenManager.getToken()}")
+            .addHeader("Authorization", "Bearer ${TokenManager.token}")
             .build()
         return chain.proceed(modifiedRequest)
     }

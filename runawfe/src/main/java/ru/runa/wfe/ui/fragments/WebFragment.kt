@@ -34,6 +34,7 @@ import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.rest.ApiClient
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
@@ -49,7 +50,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
 
         val wfURL = preferencesManager
             .getValue(PreferencesManager.WEBVIEW_URL, "")
@@ -57,12 +58,7 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
-        lifecycleScope.launch {
-            preferencesManager.setKey(
-                PreferencesManager.IS_LOGGED,
-                false
-            )
-        }
+
         val lastVersion = preferencesManager
             .getValue(PreferencesManager.LAST_VERSION, "").toString()
         val currentVersion: String = BuildConfig.VERSION_NAME
@@ -81,6 +77,20 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             findNavController().navigate(R.id.to_settings)
         }
 
+        // Handle WebView back navigation
+        backPressedCallback = requireActivity()
+            .onBackPressedDispatcher
+            .addCallback(this) {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    this.isEnabled = false
+                    // Callback toggle doesn't enable native behaviour in the line above
+                    // Call it directly
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+
         webView.webViewClient = object : WebViewClient() {
             @SuppressLint("WebViewClientOnReceivedSslError", "ObsoleteSdkInt")
             override fun onReceivedSslError(
@@ -94,7 +104,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
                     handler.cancel()
                 }
             }
-
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 urlField.text = webView.url
@@ -110,6 +119,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
                     emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
                 }
 
+            }
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(view, url, isReload)
+                backPressedCallback.isEnabled = webView.canGoBack()
             }
         }
         webView.setDownloadListener { url, userAgent, contentDisposition, mimeType, contentLength ->
@@ -174,21 +187,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
-        // Handle WebView back navigation
-        backPressedCallback = requireActivity()
-            .onBackPressedDispatcher
-            .addCallback(this) {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    this.isEnabled = false
-                    // Callback toggle doesn't enable native behaviour in the line above
-                    // Call it directly
-                    requireActivity().onBackPressedDispatcher.onBackPressed()
-                }
-            }
-        webViewHistoryBackPressedCallback(webView, backPressedCallback)
-
         val isShowUrl = preferencesManager
             .getValue(PreferencesManager.SHOW_URL, false)
         toggleUrlVisibility(isShowUrl)
@@ -199,7 +197,21 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         settings.builtInZoomControls = true
-        webView.loadUrl(wfURL)
+
+        val arguments = arguments
+        if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
+            val host = ApiClient.toOrigin(wfURL)
+            if (host.isNotEmpty()) {
+                webView.loadUrl(
+                    "${host}/wfe/login.do?login=${arguments.getString("login")}&password=${arguments.getString("password")}"
+                )
+            }
+            arguments.remove("login")
+            arguments.remove("password")
+            webView.clearHistory()
+        } else {
+            webView.loadUrl(wfURL)
+        }
     }
 
     private fun toggleUrlVisibility(isVisible: Boolean) {
@@ -215,16 +227,6 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             layoutParams.removeRule(RelativeLayout.BELOW)
             settingButtonLayoutParams.topMargin = 0
             settingsButton.layoutParams = settingButtonLayoutParams
-        }
-    }
-
-    private fun webViewHistoryBackPressedCallback(webView: WebView,
-                                                  onBackPressedCallback: OnBackPressedCallback) {
-        webView.webViewClient = object : WebViewClient() {
-            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
-                super.doUpdateVisitedHistory(view, url, isReload)
-                onBackPressedCallback.isEnabled = webView.canGoBack()
-            }
         }
     }
 }

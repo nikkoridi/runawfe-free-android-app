@@ -29,7 +29,7 @@ class DurationPreferenceDialogFragmentCompat: PreferenceDialogFragmentCompat() {
 
     override fun onBindDialogView(view: View) {
         super.onBindDialogView(view)
-        preferencesManager = PreferencesManager(view.context)
+        preferencesManager = PreferencesManager.getInstance(view.context)
 
         durationValue = view.findViewById(R.id.durationPicker)
         timeUnitPicker = view.findViewById(R.id.durationTimeUnit)
