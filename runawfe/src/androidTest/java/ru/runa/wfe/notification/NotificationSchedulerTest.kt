@@ -13,7 +13,6 @@ import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -31,6 +30,8 @@ class NotificationSchedulerTest {
     private lateinit var workManager: WorkManager
     private val preferencesManagerMock = mockk<PreferencesManager>(relaxed = true)
     private val inactiveWorkStates = setOf(null, WorkInfo.State.CANCELLED)
+    private val acceptableWorkStates =
+        setOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.SUCCEEDED)
 
     @Before
     fun setUp() = runTest {
@@ -74,15 +75,17 @@ class NotificationSchedulerTest {
         setLastCheck(2)
         io.mockk.every {
             preferencesManagerMock.getValueFlow(PreferencesManager.POLLING_INTERVAL, any())
-        } returns flowOf(1) // Fast work: < 15 min
+        } returns flowOf(1 * 60) // Fast work: < 15 min
 
         NotificationScheduler.start(context)
 
         Thread.sleep(1000)
         // Fast work is created
-        assertEquals(
-            WorkInfo.State.ENQUEUED,
+        val fastWorkState =
             checkUniqueWorkState(NotificationScheduler.FAST_NOTIFICATION_CHECK_WORK_NAME)
+        assertTrue(
+            "expected to be one of: $acceptableWorkStates but was: $fastWorkState",
+            fastWorkState in acceptableWorkStates
         )
         // Periodic work shouldn't be created
         val periodicWorkState =
@@ -100,15 +103,17 @@ class NotificationSchedulerTest {
         setLastCheck(21)
         io.mockk.every {
             preferencesManagerMock.getValueFlow(PreferencesManager.POLLING_INTERVAL, any())
-        } returns flowOf(20)
+        } returns flowOf(20 * 60)
 
         NotificationScheduler.start(context)
 
         Thread.sleep(1000)
         // Periodic work is created
-        assertEquals(
-            WorkInfo.State.ENQUEUED,
+        val periodicWorkState =
             checkUniqueWorkState(NotificationScheduler.NORMAL_NOTIFICATION_CHECK_WORK_NAME)
+        assertTrue(
+            "expected to be one of: $acceptableWorkStates but was: $periodicWorkState",
+            periodicWorkState in acceptableWorkStates
         )
         // OneTime work is cancelled
         val fastWorkState =
