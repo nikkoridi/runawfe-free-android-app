@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
 
             navController.popBackStack() // Don't return to start fragment
             if (wfURL.isEmpty()) {
-                showEmptyURLDialogFragment()
+                navController.navigate(R.id.emptyUrlDialogFragment)
             } else {
                 val checkServerUrlResult = ApiClient.checkServer(wfURL)
                 if (checkServerUrlResult is ServerCheckResult.Valid) {
@@ -110,12 +110,6 @@ class MainActivity : AppCompatActivity() {
                 }
             )
         }
-    }
-
-    fun showEmptyURLDialogFragment() {
-        val emptyURLDialogFragment = EmptyURLDialogFragment()
-        emptyURLDialogFragment.activityOfMessage = this
-        emptyURLDialogFragment.show(supportFragmentManager, "emptyURLDialog")
     }
 
     private fun canStartNotification(): Boolean {

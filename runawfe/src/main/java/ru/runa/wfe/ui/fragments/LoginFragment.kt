@@ -13,7 +13,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.databinding.LoginFragmentBinding
@@ -66,9 +65,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         if (preferencesManager
                 .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()
         ) {
-            val emptyURLDialogFragment = EmptyURLDialogFragment()
-            emptyURLDialogFragment.activityOfMessage = requireActivity()
-            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+            findNavController().navigate(R.id.emptyUrlDialogFragment)
         }
         val loginValue = login.text.toString().trim()
         val passwordValue = password.text.toString().trim()
