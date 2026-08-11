@@ -33,11 +33,13 @@ object ApiClient {
 
     private var _chatService: ChatControllerApi? = null
     val chatService: ChatControllerApi
-        get() = _chatService ?: basicApiClient.createService(ChatControllerApi::class.java).also { _chatService = it }
+        get() = _chatService ?: basicApiClient.createService(ChatControllerApi::class.java)
+            .also { _chatService = it }
 
     private var _taskService: TaskControllerApi? = null
     val taskService: TaskControllerApi
-        get() = _taskService ?: basicApiClient.createService(TaskControllerApi::class.java).also { _taskService = it }
+        get() = _taskService ?: basicApiClient.createService(TaskControllerApi::class.java)
+            .also { _taskService = it }
 
     val authService: AuthControllerApi
         get() = Retrofit.Builder()
@@ -92,17 +94,18 @@ object ApiClient {
         val withScheme = when {
             (trimmedUrl.startsWith("https://") ||
                     trimmedUrl.startsWith("http://")) -> trimmedUrl
+
             trimmedUrl.contains(":/") -> return ""
-            else ->  "http://$trimmedUrl"
+            else -> "http://$trimmedUrl"
         }
 
-         try {
-             val originUrl = Uri.parse(withScheme)
-             val scheme = originUrl.scheme ?: "http"
-             val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
-             return if (originUrl.host != null) {
-                 "$scheme://${originUrl.host}$port"
-             } else ""
+        try {
+            val originUrl = Uri.parse(withScheme)
+            val scheme = originUrl.scheme ?: "http"
+            val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
+            return if (originUrl.host != null) {
+                "$scheme://${originUrl.host}$port"
+            } else ""
         } catch (e: Exception) {
             Log.e(this::class.simpleName, "Invalid URL: $url")
         }
@@ -139,6 +142,7 @@ object ApiClient {
                     Log.e(this::class.simpleName, "Network exception: ${ex.message.toString()}")
                     return@withContext ServerCheckResult.NetworkError
                 }
+
                 else -> {
                     Log.e(this::class.simpleName, "Failed server check: ${ex.message.toString()}")
                     return@withContext ServerCheckResult.Invalid

@@ -15,8 +15,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import kotlinx.coroutines.launch
 import ru.runa.wfe.MainActivity
-import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.R
+import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat
@@ -52,21 +52,24 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
         }
 
         pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
-                val newInterval = newValue.toString().toLongOrNull()
-                val currentPollingInterval = preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, DurationPreference.DEFAULT)
-                newInterval?.let {
-                    if (newInterval != currentPollingInterval) {
-                        lifecycleScope.launch {
-                            preferencesManager.setKey(
-                                PreferencesManager.POLLING_INTERVAL,
-                                newInterval
-                            )
-                        }
-                        pollingInterval.summary = pollingIntervalSummary((newInterval / 60).toInt())
+            val newInterval = newValue.toString().toLongOrNull()
+            val currentPollingInterval = preferencesManager.getValue(
+                PreferencesManager.POLLING_INTERVAL,
+                DurationPreference.DEFAULT
+            )
+            newInterval?.let {
+                if (newInterval != currentPollingInterval) {
+                    lifecycleScope.launch {
+                        preferencesManager.setKey(
+                            PreferencesManager.POLLING_INTERVAL,
+                            newInterval
+                        )
                     }
+                    pollingInterval.summary = pollingIntervalSummary((newInterval / 60).toInt())
                 }
-                true
             }
+            true
+        }
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -85,7 +88,10 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun showPostNotificationPermissionRequest(type: NotificationType) {
         val activity: MainActivity? = (activity as? MainActivity)
-        activity?.requestPermission(Manifest.permission.POST_NOTIFICATIONS,  R.string.permission_notification_need) { isGranted ->
+        activity?.requestPermission(
+            Manifest.permission.POST_NOTIFICATIONS,
+            R.string.permission_notification_need
+        ) { isGranted ->
             if (isGranted) {
                 activity.startNotifying()
                 showNotificationChannelSettingsOreo(type)

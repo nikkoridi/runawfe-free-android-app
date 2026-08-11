@@ -19,16 +19,16 @@ import java.io.IOException
 class NotificationWorker(val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
 
-
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val channelType = NotificationType.DEFAULT
-        val notificationManager = (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-        val serviceChannel = notificationManager.getNotificationChannel(channelType.channelId) ?:
-        NotificationChannel(
-            channelType.channelId,
-            context.resources.getString(channelType.titleResId),
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
+        val notificationManager =
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+        val serviceChannel = notificationManager.getNotificationChannel(channelType.channelId)
+            ?: NotificationChannel(
+                channelType.channelId,
+                context.resources.getString(channelType.titleResId),
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
         serviceChannel.setShowBadge(false)
         notificationManager.createNotificationChannel(serviceChannel)
         val serviceStartNotification = NotificationCompat.Builder(
@@ -45,7 +45,10 @@ class NotificationWorker(val context: Context, workerParams: WorkerParameters) :
             )
             .build()
 
-        return ForegroundInfo(NotificationScheduler.NOTIFICATION_SERVICE_ID, serviceStartNotification)
+        return ForegroundInfo(
+            NotificationScheduler.NOTIFICATION_SERVICE_ID,
+            serviceStartNotification
+        )
     }
 
     override suspend fun doWork(): Result {
