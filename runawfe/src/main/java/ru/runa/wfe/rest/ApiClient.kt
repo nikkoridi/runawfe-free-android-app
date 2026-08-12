@@ -2,6 +2,7 @@ package ru.runa.wfe.rest
 
 import android.net.Uri
 import android.util.Log
+import android.webkit.URLUtil
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -90,24 +91,17 @@ object ApiClient {
     fun toOrigin(url: String): String {
         val trimmedUrl = url.trim()
         if (trimmedUrl.isEmpty()) return ""
-
-        val withScheme = when {
-            (trimmedUrl.startsWith("https://") ||
-                    trimmedUrl.startsWith("http://")) -> trimmedUrl
-
-            trimmedUrl.contains(":/") -> return ""
-            else -> "http://$trimmedUrl"
-        }
-
-        try {
-            val originUrl = Uri.parse(withScheme)
-            val scheme = originUrl.scheme ?: "http"
-            val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
-            return if (originUrl.host != null) {
-                "$scheme://${originUrl.host}$port"
-            } else ""
-        } catch (e: Exception) {
-            Log.e(this::class.simpleName, "Invalid URL: $url")
+        if (URLUtil.isNetworkUrl(trimmedUrl)) { // https or http
+            try {
+                val originUrl = Uri.parse(trimmedUrl)
+                val scheme = originUrl.scheme ?: "http"
+                val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
+                return if (originUrl.host != null) {
+                    "$scheme://${originUrl.host}$port"
+                } else ""
+            } catch (e: Exception) {
+                Log.e(this::class.simpleName, "Invalid URL: $url")
+            }
         }
         return ""
     }
@@ -117,11 +111,11 @@ object ApiClient {
         if (clearBaseUrl.isEmpty()) {
             return@withContext ServerCheckResult.Invalid
         }
-        val versionRequest = Request.Builder()
-            .url("${clearBaseUrl}/wfe/version")
-            .get()
-            .build()
         return@withContext try {
+            val versionRequest = Request.Builder()
+                .url("${clearBaseUrl}/wfe/version")
+                .get()
+                .build()
             val response = OkHttpClient.Builder()
                 .connectTimeout(3, TimeUnit.SECONDS)
                 .build()
