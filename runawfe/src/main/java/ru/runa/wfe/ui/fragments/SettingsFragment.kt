@@ -15,7 +15,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.rest.ApiClient
@@ -56,7 +55,9 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         backButton.setOnClickListener {
             savePreferences()
             if (!newServerUrlSet) {
-                findNavController().navigateUp()
+                if (!findNavController().navigateUp()) {
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
             } else {
                 findNavController().navigate(
                     R.id.settings_to_login,
@@ -140,10 +141,11 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private fun onUrlChanged() {
         val changeUrl = changeURLView.query.toString()
         if (changeUrl.isEmpty()) {
-            // TODO: it's the third copy, will it be better as interface for Activity?
-            val emptyURLDialogFragment = EmptyURLDialogFragment()
-            emptyURLDialogFragment.activityOfMessage = requireActivity()
-            emptyURLDialogFragment.show(parentFragmentManager, "emptyURLDialog")
+            findNavController().navigate(
+                R.id.emptyUrlDialogFragment,
+                null,
+                NavOptions.Builder().setPopUpTo(R.id.settingsFragment, inclusive = true).build()
+            )
             return
         }
         if (changeUrl == previousUrl) {

@@ -110,7 +110,8 @@ class NotificationHelpers(private val context: Context) {
         }
 
         fun isChannelEnabled(type: NotificationType, context: Context): Boolean {
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             return (NotificationManagerCompat.from(context).areNotificationsEnabled()
                     && (manager.getNotificationChannel(type.channelId)?.importance
                 ?: NotificationManager.IMPORTANCE_UNSPECIFIED) != NotificationManager.IMPORTANCE_NONE)

@@ -29,7 +29,7 @@ object NotificationScheduler {
         .setRequiredNetworkType(NetworkType.CONNECTED)
         .setRequiresDeviceIdle(false)
         .build()
-    private var pollingInterval: Long =  DurationPreference.DEFAULT
+    private var pollingInterval: Long = DurationPreference.DEFAULT
     private var fastCheck: Boolean = false
 
     fun start(context: Context) {
@@ -50,9 +50,11 @@ object NotificationScheduler {
                 } else {
                     fastCheck = true.takeIf { pollingInterval < 15 * 60 } ?: false
                     if (fastCheck) {
-                        WorkManager.getInstance(context).cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK_NAME)
+                        WorkManager.getInstance(context)
+                            .cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK_NAME)
                     } else {
-                        WorkManager.getInstance(context).cancelUniqueWork(FAST_NOTIFICATION_CHECK_WORK_NAME)
+                        WorkManager.getInstance(context)
+                            .cancelUniqueWork(FAST_NOTIFICATION_CHECK_WORK_NAME)
                     }
                     scheduleNext(context)
                 }
@@ -72,9 +74,9 @@ object NotificationScheduler {
     }
 
     private fun stopWorks(context: Context) {
-       WorkManager.getInstance(context).cancelUniqueWork(
-           if (fastCheck) FAST_NOTIFICATION_CHECK_WORK_NAME else NORMAL_NOTIFICATION_CHECK_WORK_NAME
-       )
+        WorkManager.getInstance(context).cancelUniqueWork(
+            if (fastCheck) FAST_NOTIFICATION_CHECK_WORK_NAME else NORMAL_NOTIFICATION_CHECK_WORK_NAME
+        )
     }
 
     fun stop(context: Context) {
