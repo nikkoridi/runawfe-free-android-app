@@ -95,9 +95,9 @@ object ApiClient {
             try {
                 val originUrl = Uri.parse(trimmedUrl)
                 val scheme = originUrl.scheme ?: "http"
-                val port = if (originUrl.port != -1) ":${originUrl.port}" else ""
+                val port = if (originUrl.port != -1) originUrl.port else ""
                 return if (originUrl.host != null) {
-                    "$scheme://${originUrl.host}$port"
+                    "$scheme://${originUrl.host}:$port"
                 } else ""
             } catch (e: Exception) {
                 Log.e(this::class.simpleName, "Invalid URL: $url")
@@ -111,7 +111,7 @@ object ApiClient {
         if (clearBaseUrl.isEmpty()) {
             return@withContext ServerCheckResult.Invalid
         }
-        return@withContext try {
+        try {
             val versionRequest = Request.Builder()
                 .url("${clearBaseUrl}/wfe/version")
                 .get()
