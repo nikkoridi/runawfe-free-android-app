@@ -127,6 +127,11 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
             } else {
                 showNotificationChannelSettingsOreo(channelType)
             }
+        } else if (preference.key == "disableChannels") {
+            val intent = Intent()
+                .setAction(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
+            context?.startActivity(intent)
         }
         return super.onPreferenceTreeClick(preference)
     }
