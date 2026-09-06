@@ -4,6 +4,12 @@
         app:iconSpaceReserved="false"
         app:title="@string/notifications_settings">
 
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="disableChannels"
+            app:summary="@string/settings_all_channels_summary"
+            app:title="@string/settings_all_channels"/>
+
         <ru.runa.wfe.ui.notification.DurationPreference
             app:iconSpaceReserved="false"
             app:key="pollingInterval"

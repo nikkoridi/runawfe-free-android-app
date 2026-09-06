@@ -85,6 +85,8 @@
     <string name="summary_setup_notifications">Нажмите для перехода к настройкам</string>
     <string name="settings_empty_value_message">Задайте значение</string>
     <string name="settings_value_error_message">Ошибка при получении значения</string>
+    <string name="settings_all_channels">Категории</string>
+    <string name="settings_all_channels_summary">Включить или отключить все категории уведомлений</string>
 
     <string name="notifications_settings">Уведомления</string>
     <string name="url_settings">Адрес сервера</string>

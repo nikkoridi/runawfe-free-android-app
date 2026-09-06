@@ -21,6 +21,10 @@
         android:id="@+id/settings_to_login"
         app:destination="@id/loginFragment"
         app:popUpTo="@id/settingsFragment"/>
+
+    <action
+        android:id="@+id/settings_to_empty_url_dialog"
+        app:destination="@id/emptyUrlDialogFragment" />
     </fragment>
 
     <fragment
@@ -52,5 +56,10 @@
         app:destination="@id/settingsFragment"
         app:popUpTo="@id/mainFragment"/>
     </fragment>
+
+    <dialog
+        android:id="@+id/emptyUrlDialogFragment"
+        android:name="ru.runa.wfe.EmptyURLDialogFragment">
+    </dialog>
 
 </navigation>
