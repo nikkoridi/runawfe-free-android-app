@@ -2,6 +2,7 @@ package ru.runa.wfe.ui.fragments
 
 import android.os.Bundle
 import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.toDuration
 import kotlin.time.toDurationUnit
 
-class DurationPreferenceDialogFragmentCompat: PreferenceDialogFragmentCompat() {
+class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() {
     private lateinit var durationValue: EditText
     private lateinit var timeUnitPicker: Spinner
     private lateinit var preferencesManager: PreferencesManager
@@ -26,32 +27,49 @@ class DurationPreferenceDialogFragmentCompat: PreferenceDialogFragmentCompat() {
         TimeUnit.MINUTES,
         TimeUnit.HOURS
     )
+    private val maxValue = 3_600
+    private val minValue = 0
 
     override fun onBindDialogView(view: View) {
         super.onBindDialogView(view)
         preferencesManager = PreferencesManager.getInstance(view.context)
 
         durationValue = view.findViewById(R.id.durationPicker)
+        durationValue.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s.isNullOrEmpty()) {
+                    return
+                }
+
+                val inputValue = s.toString().toLong()
+                if (inputValue < minValue) {
+                    durationValue.setText("$minValue")
+                    durationValue.setSelection(durationValue.text.length)
+                } else if (inputValue > maxValue) {
+                    durationValue.setText("$maxValue")
+                    durationValue.setSelection(durationValue.text.length)
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
         timeUnitPicker = view.findViewById(R.id.durationTimeUnit)
 
         val pollingIntervalSeconds = preferencesManager.getValue(
             PreferencesManager.POLLING_INTERVAL,
             DurationPreference.DEFAULT
-        ) / 1000
-        val durationSavedValue: Long
-        if (pollingIntervalSeconds % 60 == 0L) {
-            if (pollingIntervalSeconds % 3_600 == 0L) {
-                timeUnit = TimeUnit.HOURS
-                durationSavedValue = pollingIntervalSeconds / 3_600
-            } else {
-                timeUnit = TimeUnit.MINUTES
-                durationSavedValue = pollingIntervalSeconds / 60
-            }
-        } else {
-            timeUnit = TimeUnit.SECONDS
-            durationSavedValue = pollingIntervalSeconds
+        )
+        timeUnit = getTimeUnit(pollingIntervalSeconds)
+
+        val durationSavedValue: Long = when (timeUnit) {
+            TimeUnit.HOURS -> pollingIntervalSeconds / 3_600
+            TimeUnit.MINUTES -> pollingIntervalSeconds / 60
+            else -> pollingIntervalSeconds
         }
-        durationValue.text = Editable.Factory.getInstance().newEditable(durationSavedValue.toString())
+        durationValue.setText("$durationSavedValue")
 
         ArrayAdapter.createFromResource(
             requireContext(),
@@ -76,11 +94,12 @@ class DurationPreferenceDialogFragmentCompat: PreferenceDialogFragmentCompat() {
 
     override fun onDialogClosed(positiveResult: Boolean) {
         if (positiveResult) {
-            val inputValue = (durationValue.text.toString().toLong()).toDuration(timeUnit.toDurationUnit())
-            val durationMilliseconds = inputValue.inWholeMilliseconds
+            val inputValue =
+                (durationValue.text.toString().toLong()).toDuration(timeUnit.toDurationUnit())
+            val durationSeconds = inputValue.inWholeSeconds
             preference.apply {
-                if (callChangeListener(durationMilliseconds)) {
-                    duration = durationMilliseconds
+                if (callChangeListener(durationSeconds)) {
+                    duration = durationSeconds
                 }
             }
         }
@@ -90,6 +109,18 @@ class DurationPreferenceDialogFragmentCompat: PreferenceDialogFragmentCompat() {
         fun newInstance(key: String?) = DurationPreferenceDialogFragmentCompat().apply {
             arguments = Bundle(1).apply {
                 putString(ARG_KEY, key)
+            }
+        }
+
+        fun getTimeUnit(duration: Long): TimeUnit {
+            return if (duration % 60 == 0L) {
+                if (duration % 3_600 == 0L) {
+                    TimeUnit.HOURS
+                } else {
+                    TimeUnit.MINUTES
+                }
+            } else {
+                TimeUnit.SECONDS
             }
         }
     }

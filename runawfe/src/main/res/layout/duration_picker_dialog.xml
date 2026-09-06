@@ -26,7 +26,7 @@
             android:layout_weight="1"
             android:importantForAutofill="no"
             android:hint="3"
-            android:inputType="numberDecimal" />
+            android:inputType="number" />
 
         <Spinner
             android:id="@+id/durationTimeUnit"

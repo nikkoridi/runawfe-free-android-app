@@ -20,13 +20,33 @@ import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.notification.NotificationHelpers
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.ui.fragments.DurationPreferenceDialogFragmentCompat
+import java.util.concurrent.TimeUnit
 
 class NotificationSettingsFragment : PreferenceFragmentCompat() {
     private lateinit var preferencesManager: PreferencesManager
     private val notificationPreferences = NotificationType.entries.associateBy { it.preferenceName }
 
-    private fun pollingIntervalSummary(durationInSeconds: Int): String {
-        return "$durationInSeconds ${resources.getQuantityString(R.plurals.seconds, durationInSeconds)}"
+    private fun pollingIntervalSummary(duration: Long): String {
+        if (duration == 0L) return "0"
+        val timeUnit: Int
+        val value: Int
+        when (DurationPreferenceDialogFragmentCompat.getTimeUnit(duration)) {
+            TimeUnit.HOURS -> {
+                timeUnit = R.plurals.hours
+                value = duration.toInt() / 3_600
+            }
+
+            TimeUnit.MINUTES -> {
+                timeUnit = R.plurals.minutes
+                value = duration.toInt() / 60
+            }
+
+            else -> {
+                timeUnit = R.plurals.seconds
+                value = duration.toInt()
+            }
+        }
+        return "$value ${resources.getQuantityString(timeUnit, value)}"
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -40,7 +60,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
 
         // Set custom preference and it's summary
         val pollingInterval: DurationPreference? = findPreference("pollingInterval")
-        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds.toInt() / 60)
+        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds)
 
         lifecycleScope.launch {
             if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
@@ -65,7 +85,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
                             newInterval
                         )
                     }
-                    pollingInterval.summary = pollingIntervalSummary((newInterval / 60).toInt())
+                    pollingInterval.summary = pollingIntervalSummary(newInterval)
                 }
             }
             true

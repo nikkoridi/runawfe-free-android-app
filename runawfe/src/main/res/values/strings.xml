@@ -58,6 +58,12 @@
         <item quantity="many">секунд</item>
         <item quantity="other">сек.</item>
     </plurals>
+    <plurals name="hours">
+        <item quantity="one">час</item>
+        <item quantity="few">часа</item>
+        <item quantity="many">часов</item>
+        <item quantity="other">ч.</item>
+    </plurals>
 
     <string-array name="time_duration_units">
         <item>секунд</item>
