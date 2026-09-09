@@ -117,18 +117,15 @@ class MainActivity : AppCompatActivity() {
                 NotificationHelpers.isChannelEnabled(NotificationType.MESSAGE, this)
         val permissionGranted = (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) ||
                 this.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-        if (!(ApiClient.isApiClientInitialized() && channelsEnabled && permissionGranted)) {
-            return false
-        }
-        if (preferencesManager.getValue( PreferencesManager.POLLING_INTERVAL, 0) <= 0) {
-            return false
-        }
-        return true
+        return ApiClient.isApiClientInitialized() && channelsEnabled && permissionGranted
     }
 
     fun startNotifying() {
-        if (canStartNotification()) {
-            NotificationScheduler.start(this)
+        lifecycleScope.launch {
+            if (canStartNotification() &&
+                preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, 0) > 0) {
+                NotificationScheduler.start(this@MainActivity)
+            }
         }
     }
 

@@ -39,14 +39,16 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         changeURLView = view.findViewById(R.id.searchView)
         backButton = view.findViewById(R.id.backButton)
 
-        val wfurl = preferencesManager
-            .getValue(PreferencesManager.WEBVIEW_URL, "")
-        changeURLView.setQuery(wfurl, true)
-        previousUrl = wfurl
+        lifecycleScope.launch {
+            val wfurl = preferencesManager
+                .getValue(PreferencesManager.WEBVIEW_URL, "")
+            changeURLView.setQuery(wfurl, true)
+            previousUrl = wfurl
 
-        isShowUrl = preferencesManager
-            .getValue(PreferencesManager.SHOW_URL, false)
-        showUrlCheckbox.isChecked = isShowUrl
+            isShowUrl = preferencesManager
+                .getValue(PreferencesManager.SHOW_URL, false)
+            showUrlCheckbox.isChecked = isShowUrl
+        }
 
         view.findViewById<LinearLayout>(R.id.rootLayout).setOnClickListener {
             hideKeyboard()

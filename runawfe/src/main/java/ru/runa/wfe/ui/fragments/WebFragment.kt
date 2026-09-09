@@ -52,20 +52,18 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         super.onViewCreated(view, savedInstanceState)
         preferencesManager = PreferencesManager.getInstance(view.context)
 
-        val wfURL = preferencesManager
-            .getValue(PreferencesManager.WEBVIEW_URL, "")
         urlField = view.findViewById(R.id.urlField)
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
         settingsButton = view.findViewById(R.id.settingsButton)
 
-        val lastVersion = preferencesManager
-            .getValue(PreferencesManager.LAST_VERSION, "").toString()
-        val currentVersion: String = BuildConfig.VERSION_NAME
-        if (lastVersion != currentVersion) {
-            webView.clearCache(true)
-            webView.reload()
-            lifecycleScope.launch {
+        lifecycleScope.launch {
+            val lastVersion = preferencesManager
+                .getValue(PreferencesManager.LAST_VERSION, "").toString()
+            val currentVersion: String = BuildConfig.VERSION_NAME
+            if (lastVersion != currentVersion) {
+                webView.clearCache(true)
+                webView.reload()
                 preferencesManager.setKey(PreferencesManager.LAST_VERSION, currentVersion)
             }
         }
@@ -187,9 +185,11 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
-        val isShowUrl = preferencesManager
-            .getValue(PreferencesManager.SHOW_URL, false)
-        toggleUrlVisibility(isShowUrl)
+        lifecycleScope.launch {
+            val isShowUrl = preferencesManager
+                .getValue(PreferencesManager.SHOW_URL, false)
+            toggleUrlVisibility(isShowUrl)
+        }
 
         val settings: WebSettings = webView.settings
         settings.javaScriptEnabled = true
@@ -199,18 +199,29 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         settings.builtInZoomControls = true
 
         val arguments = arguments
-        if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
-            val host = ApiClient.toOrigin(wfURL)
-            if (host.isNotEmpty()) {
-                webView.loadUrl(
-                    "${host}/wfe/login.do?login=${arguments.getString("login")}&password=${arguments.getString("password")}"
-                )
+        lifecycleScope.launch {
+            val wfURL = preferencesManager
+                .getValue(PreferencesManager.WEBVIEW_URL, "")
+            if (wfURL.isEmpty()) {
+                findNavController().navigate(R.id.emptyUrlDialogFragment)
             }
-            arguments.remove("login")
-            arguments.remove("password")
-            webView.clearHistory()
-        } else {
-            webView.loadUrl(wfURL)
+            if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
+                val host = ApiClient.toOrigin(wfURL)
+                if (host.isNotEmpty()) {
+                    webView.loadUrl(
+                        "${host}/wfe/login.do?login=${arguments.getString("login")}&password=${
+                            arguments.getString(
+                                "password"
+                            )
+                        }"
+                    )
+                }
+                arguments.remove("login")
+                arguments.remove("password")
+                webView.clearHistory()
+            } else {
+                webView.loadUrl(wfURL)
+            }
         }
     }
 

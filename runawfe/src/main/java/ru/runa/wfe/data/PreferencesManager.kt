@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 
 private const val PREFERENCES_NAME = "app_preferences"
 private const val PREFERENCES_SUFFIX = "_preferences"
@@ -54,12 +53,8 @@ class PreferencesManager private constructor(private val context: Context) {
             .distinctUntilChanged()
     }
 
-    fun <T> getValue(key: Preferences.Key<T>, defaultValue: T): T {
-        var value: T
-        runBlocking {
-            value = context.dataStore.data.first()[key] ?: defaultValue
-        }
-        return value
+    suspend fun <T> getValue(key: Preferences.Key<T>, defaultValue: T): T {
+        return context.dataStore.data.first()[key] ?: defaultValue
     }
 
     suspend fun <T> getSecureValue(key: Preferences.Key<T>, type: Class<T>): T? {

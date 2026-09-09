@@ -13,6 +13,7 @@
         <ru.runa.wfe.ui.notification.DurationPreference
             app:iconSpaceReserved="false"
             app:key="pollingInterval"
+            app:summary="..."
             app:title="@string/check_delay_title" />
 
         <Preference
