@@ -36,6 +36,15 @@ object NotificationScheduler {
         val preferencesManager = PreferencesManager.getInstance(context)
         // DataStore uses Dispatchers.IO, this coroutine dispatcher won't change it
         CoroutineScope(Dispatchers.Default).launch {
+            val lastCheck = OffsetDateTime.parse(
+                preferencesManager.getValue(
+                    PreferencesManager.LAST_CHECK,
+                    OffsetDateTime.now(ZoneOffset.UTC).toString()
+                )
+            )
+                .withOffsetSameLocal(ZoneOffset.UTC)
+            NotificationLogic.lastTasksCheck = lastCheck
+
             preferencesManager.getValueFlow(
                 PreferencesManager.POLLING_INTERVAL,
                 pollingInterval //
@@ -60,16 +69,6 @@ object NotificationScheduler {
                 }
             }
         }
-
-        val lastCheck = OffsetDateTime.parse(
-            preferencesManager.getValue(
-                PreferencesManager.LAST_CHECK,
-                OffsetDateTime.now(ZoneOffset.UTC).toString()
-            )
-        )
-            .withOffsetSameLocal(ZoneOffset.UTC)
-        NotificationLogic.lastTasksCheck = lastCheck
-
         NotificationHelpers(context).createNotificationChannels()
     }
 

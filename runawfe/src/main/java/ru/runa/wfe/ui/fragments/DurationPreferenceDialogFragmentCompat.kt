@@ -58,10 +58,7 @@ class DurationPreferenceDialogFragmentCompat : PreferenceDialogFragmentCompat() 
 
         timeUnitPicker = view.findViewById(R.id.durationTimeUnit)
 
-        val pollingIntervalSeconds = preferencesManager.getValue(
-            PreferencesManager.POLLING_INTERVAL,
-            DurationPreference.DEFAULT
-        )
+        val pollingIntervalSeconds = preference.duration
         timeUnit = getTimeUnit(pollingIntervalSeconds)
 
         val durationSavedValue: Long = when (timeUnit) {

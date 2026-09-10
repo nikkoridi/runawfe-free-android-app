@@ -44,7 +44,15 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         val settingsButton = binding.settingsButton
 
         loginButton.setOnClickListener {
-            loginHandler(login, password, error)
+            lifecycleScope.launch {
+                if (preferencesManager
+                        .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()
+                ) {
+                    findNavController().navigate(R.id.emptyUrlDialogFragment)
+                } else {
+                    loginHandler(login, password, error)
+                }
+            }
         }
 
         settingsButton.setOnClickListener {
@@ -62,11 +70,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         password: EditText,
         error: TextView
     ) {
-        if (preferencesManager
-                .getValue(PreferencesManager.WEBVIEW_URL, "").isEmpty()
-        ) {
-            findNavController().navigate(R.id.emptyUrlDialogFragment)
-        }
         val loginValue = login.text.toString().trim()
         val passwordValue = password.text.toString().trim()
         loginViewModel.login(loginValue, passwordValue) { loginResult ->

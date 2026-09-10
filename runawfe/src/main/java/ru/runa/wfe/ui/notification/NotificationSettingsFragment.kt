@@ -52,43 +52,35 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.notification_settings, rootKey)
         preferencesManager = PreferencesManager.getInstance(requireContext())
-
-        val pollingIntervalSeconds = preferencesManager.getValue(
-            PreferencesManager.POLLING_INTERVAL,
-            DurationPreference.DEFAULT
-        )
-
-        // Set custom preference and it's summary
-        val pollingInterval: DurationPreference? = findPreference("pollingInterval")
-        pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds)
-
         lifecycleScope.launch {
-            if (!preferencesManager.hasKey(PreferencesManager.POLLING_INTERVAL)) {
-                preferencesManager.setKey(
-                    PreferencesManager.POLLING_INTERVAL,
-                    DurationPreference.DEFAULT
-                )
-            }
-        }
-
-        pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
-            val newInterval = newValue.toString().toLongOrNull()
-            val currentPollingInterval = preferencesManager.getValue(
+            val pollingIntervalSeconds = preferencesManager.getValue(
                 PreferencesManager.POLLING_INTERVAL,
                 DurationPreference.DEFAULT
             )
-            newInterval?.let {
-                if (newInterval != currentPollingInterval) {
+            // Set custom preference and it's summary
+            val pollingInterval: DurationPreference? = findPreference("pollingInterval")
+            pollingInterval?.duration = pollingIntervalSeconds
+            pollingInterval?.summary = pollingIntervalSummary(pollingIntervalSeconds)
+            pollingInterval?.setOnPreferenceChangeListener { _, newValue ->
+                val newInterval = newValue.toString().toLongOrNull()
+                newInterval?.let {
                     lifecycleScope.launch {
-                        preferencesManager.setKey(
+                        val currentPollingInterval = preferencesManager.getValue(
                             PreferencesManager.POLLING_INTERVAL,
-                            newInterval
+                            DurationPreference.DEFAULT
                         )
+                        if (newInterval != currentPollingInterval) {
+                            preferencesManager.setKey(
+                                PreferencesManager.POLLING_INTERVAL,
+                                newInterval
+                            )
+                            pollingInterval.summary =
+                                pollingIntervalSummary(newInterval)
+                        }
                     }
-                    pollingInterval.summary = pollingIntervalSummary(newInterval)
                 }
+                true
             }
-            true
         }
     }
 
