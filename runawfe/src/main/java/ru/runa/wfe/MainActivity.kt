@@ -80,36 +80,42 @@ class MainActivity : AppCompatActivity() {
                         preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     }
                 } else {
-                    Snackbar.make(rootView, R.string.invalid_url, Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(
+                        rootView,
+                        if (checkServerUrlResult is ServerCheckResult.Invalid)
+                            R.string.invalid_url
+                        else R.string.network_error_url,
+                        Snackbar.LENGTH_SHORT
+                    ).show()
                     navController.navigate(R.id.settingsFragment)
                 }
             }
+        }
 
-            navController.addOnDestinationChangedListener(
-                object : NavController.OnDestinationChangedListener {
-                    override fun onDestinationChanged(
-                        controller: NavController,
-                        destination: NavDestination,
-                        arguments: SavedState?
-                    ) {
-                        if (destination.id == R.id.mainFragment) {
-                            val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                            if (firstRun && sdkTiramisu) {
-                                requestPermission(
-                                    Manifest.permission.POST_NOTIFICATIONS,
-                                    R.string.permission_notification_need
-                                ) { isGranted ->
-                                    if (isGranted) startNotifying()
-                                }
-                            } else {
-                                startNotifying()
+        navController.addOnDestinationChangedListener(
+            object : NavController.OnDestinationChangedListener {
+                override fun onDestinationChanged(
+                    controller: NavController,
+                    destination: NavDestination,
+                    arguments: SavedState?
+                ) {
+                    if (destination.id == R.id.mainFragment) {
+                        val sdkTiramisu = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                        if (firstRun && sdkTiramisu) {
+                            requestPermission(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                                R.string.permission_notification_need
+                            ) { isGranted ->
+                                if (isGranted) startNotifying()
                             }
-                            controller.removeOnDestinationChangedListener(this)
+                        } else {
+                            startNotifying()
                         }
+                        controller.removeOnDestinationChangedListener(this)
                     }
                 }
-            )
-        }
+            }
+        )
     }
 
     private fun canStartNotification(): Boolean {

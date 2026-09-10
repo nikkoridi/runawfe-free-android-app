@@ -155,25 +155,27 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         }
         val originChangeUrl = ApiClient.toOrigin(changeUrl)
         val areUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(previousUrl)
-        lifecycleScope.launch {
-            if (areUrlHostsEqual) {
+        if (areUrlHostsEqual) {
+            lifecycleScope.launch {
                 preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-                ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
-                previousUrl = changeUrl
-            } else {
-                val checkResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
-                if (checkResult is ServerCheckResult.Valid) {
-                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-                    ApiClient.setServerUrl(checkResult)
+            }
+            ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
+            previousUrl = changeUrl
+        } else {
+            lifecycleScope.launch {
+                val checkServerUrlResult: ServerCheckResult = ApiClient.checkServer(changeUrl)
+                if (checkServerUrlResult is ServerCheckResult.Valid) {
+                    ApiClient.setServerUrl(checkServerUrlResult)
                     previousUrl = changeUrl
                     newServerUrlSet = true
+                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     loginScreenSuggest()
                 } else {
                     view?.let {
                         Snackbar.make(
                             it,
-                            if (checkResult is ServerCheckResult.Invalid)
+                            if (checkServerUrlResult is ServerCheckResult.Invalid)
                                 R.string.invalid_url
                             else R.string.network_error_url,
                             Snackbar.LENGTH_SHORT
