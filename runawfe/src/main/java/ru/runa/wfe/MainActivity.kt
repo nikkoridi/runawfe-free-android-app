@@ -13,23 +13,28 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.savedstate.SavedState
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.data.PreferencesViewModel
 import ru.runa.wfe.notification.NotificationHelpers
 import ru.runa.wfe.notification.NotificationHelpers.NotificationType
 import ru.runa.wfe.notification.NotificationScheduler
-import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
+import ru.runa.wfe.rest.TokenManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
+    private lateinit var preferencesViewModel: PreferencesViewModel
     private var firstRun: Boolean = false
     private lateinit var rootView: View
 
@@ -42,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var intentCallback: ((Int) -> Unit)? = null
     private val intentLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result -> intentCallback?.invoke(result.resultCode)}
+    ) { result -> intentCallback?.invoke(result.resultCode) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +56,10 @@ class MainActivity : AppCompatActivity() {
         // Are there no files in /data/data/{applicationId}? Then it's the very first app launch
         firstRun = this.filesDir.listFiles()?.isEmpty() ?: false
         preferencesManager = PreferencesManager.getInstance(this)
+        preferencesViewModel = ViewModelProvider(
+            this,
+            PreferencesViewModel.Factory(preferencesManager)
+        )[PreferencesViewModel::class.java]
         setNavigation()
     }
 
@@ -59,17 +68,14 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
                     as NavHostFragment
         val navController = navHostFragment.navController
-
+        navController.popBackStack() // Don't return to start fragment
         // Conditional start screen
         lifecycleScope.launch {
-            val wfURL = preferencesManager
-                .getValue(PreferencesManager.WEBVIEW_URL, "")
-
-            navController.popBackStack() // Don't return to start fragment
-            if (wfURL.isEmpty()) {
+            val wfUrl = preferencesViewModel.wfUrl.filterNotNull().first()
+            if (wfUrl.isBlank()) {
                 navController.navigate(R.id.emptyUrlDialogFragment)
             } else {
-                val checkServerUrlResult = ApiClient.checkServer(wfURL)
+                val checkServerUrlResult = ApiClient.checkServer(wfUrl)
                 if (checkServerUrlResult is ServerCheckResult.Valid) {
                     ApiClient.setServerUrl(checkServerUrlResult)
                     val tokenLoadSuccess = TokenManager.loadToken(preferencesManager)
@@ -128,8 +134,8 @@ class MainActivity : AppCompatActivity() {
 
     fun startNotifying() {
         lifecycleScope.launch {
-            if (canStartNotification() &&
-                preferencesManager.getValue(PreferencesManager.POLLING_INTERVAL, 0) > 0) {
+            preferencesViewModel.pollingInterval.first { it != null && it > 0 }
+            if (canStartNotification()) {
                 NotificationScheduler.start(this@MainActivity)
             }
         }

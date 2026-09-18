@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ru.runa.wfe.data.PreferencesManager
 import ru.runa.wfe.ui.notification.DurationPreference
@@ -47,8 +48,8 @@ object NotificationScheduler {
 
             preferencesManager.getValueFlow(
                 PreferencesManager.POLLING_INTERVAL,
-                pollingInterval //
-            ).collect { value ->
+                pollingInterval
+            ).collectLatest { value ->
                 pollingInterval = value
                 /*
                 The value is nonzero initially (checked in MainActivity)
@@ -57,7 +58,7 @@ object NotificationScheduler {
                 if (pollingInterval == 0L) {
                     stop(context)
                 } else {
-                    fastCheck = true.takeIf { pollingInterval < 15 * 60 } ?: false
+                    fastCheck = pollingInterval < (15 * 60)
                     if (fastCheck) {
                         WorkManager.getInstance(context)
                             .cancelUniqueWork(NORMAL_NOTIFICATION_CHECK_WORK_NAME)
