@@ -10,19 +10,25 @@ import android.widget.LinearLayout
 import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.data.PreferencesViewModel
 import ru.runa.wfe.rest.ApiClient
 import ru.runa.wfe.rest.ServerCheckResult
 import ru.runa.wfe.ui.notification.NotificationSettingsFragment
 
 class SettingsFragment : Fragment(R.layout.settings_fragment) {
     private lateinit var preferencesManager: PreferencesManager
+    private lateinit var preferencesViewModel: PreferencesViewModel
 
     private lateinit var showUrlCheckbox: CheckBox
     private lateinit var changeURLView: SearchView
@@ -35,19 +41,28 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         preferencesManager = PreferencesManager.getInstance(view.context)
+        preferencesViewModel = ViewModelProvider(
+            requireActivity(),
+            PreferencesViewModel.Factory(preferencesManager)
+        )[PreferencesViewModel::class.java]
         showUrlCheckbox = view.findViewById(R.id.showUrlCheckbox)
         changeURLView = view.findViewById(R.id.searchView)
         backButton = view.findViewById(R.id.backButton)
 
-        lifecycleScope.launch {
-            val wfurl = preferencesManager
-                .getValue(PreferencesManager.WEBVIEW_URL, "")
-            changeURLView.setQuery(wfurl, true)
-            previousUrl = wfurl
-
-            isShowUrl = preferencesManager
-                .getValue(PreferencesManager.SHOW_URL, false)
-            showUrlCheckbox.isChecked = isShowUrl
+        viewLifecycleOwner.lifecycleScope.launch {
+            launch {
+                preferencesViewModel.wfUrl.collectLatest { wfurl ->
+                    wfurl?.let {
+                        previousUrl = wfurl
+                        changeURLView.setQuery(wfurl, true)
+                    }
+                }
+            }
+            launch {
+                val showUrlValue = preferencesViewModel.showUrl.filterNotNull().first()
+                isShowUrl = showUrlValue
+                showUrlCheckbox.isChecked = showUrlValue
+            }
         }
 
         view.findViewById<LinearLayout>(R.id.rootLayout).setOnClickListener {
@@ -92,7 +107,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
 
         showUrlCheckbox.setOnCheckedChangeListener { _, isChecked ->
             isShowUrl = isChecked
-            saveShowUrl()
+            preferencesViewModel.updatePreference(PreferencesManager.SHOW_URL, isShowUrl)
         }
 
         changeURLView.setOnQueryTextFocusChangeListener { _, hasFocus ->
@@ -129,14 +144,8 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         }
     }
 
-    private fun saveShowUrl() {
-        lifecycleScope.launch {
-            preferencesManager.setKey(PreferencesManager.SHOW_URL, isShowUrl)
-        }
-    }
-
     private fun savePreferences() {
-        saveShowUrl()
+        preferencesViewModel.updatePreference(PreferencesManager.SHOW_URL, isShowUrl)
         onUrlChanged()
     }
 
@@ -156,9 +165,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
         val originChangeUrl = ApiClient.toOrigin(changeUrl)
         val areUrlHostsEqual = originChangeUrl == ApiClient.toOrigin(previousUrl)
         if (areUrlHostsEqual) {
-            lifecycleScope.launch {
-                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
-            }
+            preferencesViewModel.updatePreference(PreferencesManager.WEBVIEW_URL, changeUrl)
             ApiClient.setServerUrl(ServerCheckResult.Valid(originChangeUrl))
             previousUrl = changeUrl
         } else {
@@ -168,7 +175,7 @@ class SettingsFragment : Fragment(R.layout.settings_fragment) {
                     ApiClient.setServerUrl(checkServerUrlResult)
                     previousUrl = changeUrl
                     newServerUrlSet = true
-                    preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, changeUrl)
+                    preferencesViewModel.updatePreference(PreferencesManager.WEBVIEW_URL, changeUrl)
                     preferencesManager.deleteKeyValue(PreferencesManager.TOKEN)
                     loginScreenSuggest()
                 } else {

@@ -27,18 +27,24 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.runa.wfe.BuildConfig
 import ru.runa.wfe.EmptyURLDialogFragment
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
+import ru.runa.wfe.data.PreferencesViewModel
 import ru.runa.wfe.rest.ApiClient
 import kotlin.math.abs
 
 class WebFragment : Fragment(R.layout.web_fragment) {
     private lateinit var preferencesManager: PreferencesManager
+    private lateinit var preferencesViewModel: PreferencesViewModel
 
     private lateinit var webView: WebView
     private lateinit var urlField: TextView
@@ -51,7 +57,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         preferencesManager = PreferencesManager.getInstance(view.context)
-
+        preferencesViewModel = ViewModelProvider(
+            requireActivity(),
+            PreferencesViewModel.Factory(preferencesManager)
+        )[PreferencesViewModel::class.java]
         urlField = view.findViewById(R.id.urlField)
         webView = view.findViewById(R.id.webview)
         topBar = view.findViewById(R.id.topBar)
@@ -69,9 +78,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         }
 
         settingsButton.setOnClickListener {
-            lifecycleScope.launch {
-                preferencesManager.setKey(PreferencesManager.WEBVIEW_URL, webView.url.toString())
-            }
+            preferencesViewModel.updatePreference(
+                PreferencesManager.WEBVIEW_URL,
+                webView.url.toString()
+            )
             findNavController().navigate(R.id.to_settings)
         }
 
@@ -105,12 +115,10 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 urlField.text = webView.url
-                lifecycleScope.launch {
-                    preferencesManager.setKey(
-                        PreferencesManager.WEBVIEW_URL,
-                        webView.url.toString()
-                    )
-                }
+                preferencesViewModel.updatePreference(
+                    PreferencesManager.WEBVIEW_URL,
+                    webView.url.toString()
+                )
                 if (webView.url.isNullOrBlank() || webView.url == "about:blank") {
                     val emptyURLDialogFragment = EmptyURLDialogFragment()
                     emptyURLDialogFragment.activityOfMessage = requireActivity()
@@ -185,10 +193,12 @@ class WebFragment : Fragment(R.layout.web_fragment) {
             ).show()
         }
 
-        lifecycleScope.launch {
-            val isShowUrl = preferencesManager
-                .getValue(PreferencesManager.SHOW_URL, false)
-            toggleUrlVisibility(isShowUrl)
+        viewLifecycleOwner.lifecycleScope.launch {
+            preferencesViewModel.showUrl.collectLatest { isShowUrl ->
+                isShowUrl?.let {
+                    toggleUrlVisibility(isShowUrl)
+                }
+            }
         }
 
         val settings: WebSettings = webView.settings
@@ -199,10 +209,9 @@ class WebFragment : Fragment(R.layout.web_fragment) {
         settings.builtInZoomControls = true
 
         val arguments = arguments
-        lifecycleScope.launch {
-            val wfURL = preferencesManager
-                .getValue(PreferencesManager.WEBVIEW_URL, "")
-            if (wfURL.isEmpty()) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val wfURL = preferencesViewModel.wfUrl.filterNotNull().first()
+            if (wfURL.isBlank()) {
                 findNavController().navigate(R.id.emptyUrlDialogFragment)
             }
             if (arguments != null && arguments.containsKey("login") && arguments.containsKey("password")) {
