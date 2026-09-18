@@ -77,6 +77,7 @@ class NotificationSettingsFragment : PreferenceFragmentCompat() {
             val newInterval = newValue.toString().toLongOrNull()
             newInterval?.let {
                 if (newInterval != pollingIntervalValue) {
+                    pollingIntervalValue = newInterval
                     preferencesViewModel.updatePreference(
                         PreferencesManager.POLLING_INTERVAL,
                         newInterval
