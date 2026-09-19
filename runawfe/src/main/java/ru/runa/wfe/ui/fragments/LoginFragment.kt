@@ -1,10 +1,10 @@
 package ru.runa.wfe.ui.fragments
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -15,33 +15,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.runa.wfe.R
 import ru.runa.wfe.data.PreferencesManager
-import ru.runa.wfe.databinding.LoginFragmentBinding
 import ru.runa.wfe.rest.TokenManager
 import ru.runa.wfe.ui.login.LoginViewModel
 
 class LoginFragment : Fragment(R.layout.login_fragment) {
-    private var _binding: LoginFragmentBinding? = null
-    private val binding get() = _binding!!
     private val loginViewModel: LoginViewModel by viewModels()
     private lateinit var preferencesManager: PreferencesManager
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = LoginFragmentBinding.inflate(inflater, container, false)
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferencesManager = PreferencesManager.getInstance(view.context)
-        val login = binding.login
-        val password = binding.password
-        val error = binding.errorMessage
-        val loginButton = binding.loginButton
-        val settingsButton = binding.settingsButton
+        val login: EditText = view.findViewById(R.id.login)
+        val password: EditText = view.findViewById(R.id.password)
+        val error: TextView = view.findViewById(R.id.error_message)
+        val loginButton: Button = view.findViewById(R.id.login_button)
+        val settingsButton: ImageButton = view.findViewById(R.id.settingsButton)
 
         loginButton.setOnClickListener {
             lifecycleScope.launch {
@@ -58,11 +46,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         settingsButton.setOnClickListener {
             findNavController().navigate(R.id.login_to_settings)
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
     private fun loginHandler(
